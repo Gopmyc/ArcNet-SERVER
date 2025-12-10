@@ -1,0 +1,11 @@
+# Path where all subloader scripts are located
+SUBLOADERS_PATH:  "srcs/core/loader/subloaders/"
+
+# Tables to store loaded resources grouped by type
+RESSOURCES:       {}
+
+# Defines the order in which resource groups should be loaded
+LOAD_PRIORITY:
+  1: "CLASSES"
+  2: "CORE"
+  3: "MODULES"
