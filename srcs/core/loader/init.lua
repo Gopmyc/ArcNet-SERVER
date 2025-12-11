@@ -8,6 +8,8 @@ function LOADER:Initialize(sConfigPath, tLibraries)
 	local tLoader			= self:CreateLoaderInstance(tConfig)
 	tLoader.SUBLOADER_BASE	= self:InitializeSubloaders(tLoader, tConfig)
 
+	tLoader.LIBRARY		= tLoader:GetLibrariesBase("libraries", tLoader)
+
 	-- It's not clean, it needs to be changed later
 	local fMsgC	= MsgC
 	MsgC	= function(...)
@@ -72,24 +74,10 @@ function LOADER:GetSubLoaderBase()
 end
 
 function LOADER:DeepRawCopy(tTable, tSeen)
-    tSeen			= tSeen or {}
-    if tSeen[tTable] then return tSeen[tTable] end
-
-    local tCopy		= {}
-    tSeen[tTable]	= tCopy
-
-    for Key, Value in pairs(tTable) do
-    	if istable(Value) then
-    		tCopy[Key] = self:DeepRawCopy(Value, tSeen)
-    	else
-    		tCopy[Key] = Value
-    	end
-    end
-
-    return tCopy
+    return self.LIBRARY.UTILS:DeepRawCopy(tTable, tSeen)
 end
 
-function LOADER:LoadInEnv(sFileSource, tSandEnv, sAccessPoint, tFileArgs)
+function LOADER:LoadInEnv(sFileSource, tSandEnv, sAccessPoint, tFileArgs, bLoadSubFolders) -- TODO
 	assert(isstring(sFileSource), "[ENV-LOADER] FileSource must be a string (#1)")
 	assert(istable(tSandEnv), "[ENV-LOADER] ENV must be a table (#2)")
 	assert(isstring(sAccessPoint), "[ENV-LOADER] AccessPoint must be a string (#3)")
@@ -108,11 +96,13 @@ function LOADER:LoadInEnv(sFileSource, tSandEnv, sAccessPoint, tFileArgs)
 	if bIsDir then
 		sFileSource = sFileSource:sub(-1) ~= "/" and sFileSource .. "/" or sFileSource
 
-		local sClient = sFileSource .. "client/cl_init.lua"
-		local sServer = sFileSource .. "server/sv_init.lua"
+		if bLoadSubFolders then
+			local sClient = sFileSource .. "client/cl_init.lua"
+			local sServer = sFileSource .. "server/sv_init.lua"
 
-		tServerEnv = SERVER and lovr.filesystem.isFile(sServer) and self:LoadInEnv(sServer, tSandEnv, sAccessPoint, tFileArgs) or nil
-		tClientEnv = CLIENT and lovr.filesystem.isFile(sClient) and self:LoadInEnv(sClient, tSandEnv, sAccessPoint, tFileArgs) or nil
+			tServerEnv = SERVER and lovr.filesystem.isFile(sServer) and self:LoadInEnv(sServer, tSandEnv, sAccessPoint, tFileArgs) or nil
+			tClientEnv = CLIENT and lovr.filesystem.isFile(sClient) and self:LoadInEnv(sClient, tSandEnv, sAccessPoint, tFileArgs) or nil
+		end
 		
 		sFileSource = sFileSource .. "init.lua"
 	end
@@ -386,11 +376,8 @@ function LOADER:GetDependencies(tDependencies, tSides, tSubLoader)
 	return tDependenciesFinded
 end
 
-function LOADER:IncludeBinaryFile(sFilePath)
-	require(sFilePath)
-	local sModuleName		= string.match(sFilePath, "([^/\\]+)$")
-
-	return self:DeepRawCopy(_G[sModuleName]) -- or use table.Copy ?
+function LOADER:IncludeBinaryFile(sFilePath) -- <-- Useful for a decoupled logic
+	return require(sFilePath)
 end
 
 function LOADER:GetLuaFiles(sFolderPath, tFilesShared)
@@ -404,7 +391,7 @@ function LOADER:GetLuaFiles(sFolderPath, tFilesShared)
 
 	if not bExists then return self:DebugPrint("Path not found: " .. sCleanPath, "WARNING") end
 		
-	local tFiles, tDirs	= FilesFind(sCleanPath .. "/*", "LUA")
+	local tFiles, tDirs	= FilesFind(sCleanPath .. "/*")
 
 	for _, sFile in ipairs(tFiles) do
 		local sPathFull = sCleanPath .. "/" .. sFile
@@ -419,8 +406,7 @@ function LOADER:GetLuaFiles(sFolderPath, tFilesShared)
 end
 
 function LOADER:GetLibrariesBase(sBasePath, tParent)
-	local function scan(p,t)t=t or{}for _,f in ipairs(FilesFind(p.."/*","LUA"))do t[#t+1]=p.."/"..f end for _,d in ipairs(select(2,FilesFind(p.."/*","LUA")))do scan(p.."/"..d,t) end return t end
-	local function LoadInEnv(sPath) assert(isstring(sPath), "[LIBRARIES-LOADER] Path must be a string"); assert(lovr.filesystem.isFile(sPath, "LUA"), "[LIBRARIES-LOADER] File not found: " .. sPath); local bOk, fFunction = pcall(CompileFile, sPath); assert(bOk, "[LIBRARIES-LOADER] Compile error: " .. tostring(fFunction)); local tEnv	= setmetatable({ LIBRARY = {} }, { __index = _G }); local bOk, sErr = pcall(function() setfenv(fFunction, tEnv)() end); assert(bOk, "[LIBRARIES-LOADER] Compile error: " .. tostring(sErr)); return tEnv.LIBRARY end
+	local function scan(p,t)t=t or{}for _,f in ipairs(FilesFind(p.."/*"))do t[#t+1]=p.."/"..f end for _,d in ipairs(select(2,FilesFind(p.."/*")))do scan(p.."/"..d,t) end return t end
 
 	local tLibraries	= {}
 	tLibraries.__PATH	= isstring(sBasePath) and sBasePath or "libraries"
@@ -450,7 +436,7 @@ function LOADER:GetLibrariesBase(sBasePath, tParent)
 			local fSide										= tBoth[sLibFolder] or tBoth[sPrefix] or tBoth["sh_"]
 
 			if not fSide(sFile) then goto continue end
-			tBuffer[sFile:match("libraries/(.-)%.lua$")]	= LoadInEnv(sFile)
+			tBuffer[string.upper(sFile:match("libraries/(.-)%.lua$"))]	= self:LoadInEnv(sFile, { LIBRARY = {} }, "LIBRARY", {}, false)
 
 			::continue::
 		end
