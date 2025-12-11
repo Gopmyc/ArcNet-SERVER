@@ -46,70 +46,38 @@ function CORE:SendToClient(iID, sMessageID, tData, iChannel, sFlag)
 		packet	=	tData,
 		flag	=	isstring(sFlag) and sFlag or "reliable"
 	}, isnumber(iChannel) and iChannel or 0))
-
 end
 
-return Class{
-	
-	--- BASE METHODS ---
-	init			=	function(self)
-		
-	end,
-	--------------------
-	
-	--- CUSTOM METHODS ---
-	Update			=	function(self, iDt)
-		
-	end,
+function CORE:SendToClients(tData, iChannel, sFlag)
+	for sID, tClient in pairs(self.CLIENTS) do
+		if not (istable(tClient) and next(tClient)) then goto continue end
 
-	Close			=	function(self)
-		if not self._HOST then return end
-		self._HOST:flush()
-		self._HOST	=	nil
-		
-		self.Logger:Log(2, "Server stopped at : " ..os.date("%Y-%m-%d %H:%M:%S"))
-		self.Logger:Close()
-	end,
-	
-	SendToClient	=	function(self, sID, sMessageID, tData, iChannel, sFlag)
-		assert(type(sID) == "number",			"ERROR ...")
-		assert(type(sMessageID) == "string",	"ERROR ...")
-		assert(type(tData) == "table",			"ERROR ...")
-		
-		local tPeer	=	self:IsValidClient(sID)
-		if not tPeer then return self.Logger:Log(2, "Attempted to send message to unregister Client [ID : "..sID.."]  : "..tostring(tPeer)) end
-		
-		self._EVENTS:Call(self, self._EVENTS:BuildEvent("send", tPeer, {
-			id		=	sMessageID,
-			packet	=	tData,
-			flag	=	(type(sFlag) == "string") and sFlag or "reliable"
-		}, (type(iChannel) == "number") and iChannel or 0))
-	end,
-	
-	SendToClients	=	function(self, tData, iChannel, sFlag)
-		for sID, tClient in pairs(self._CLIENTS) do
-			if not (type(tClient) == "table" and next(tClient)) then goto continue end; self:SendToClient(sID, tData, iChannel, sFlag); ::continue::
-		end
-	end,
-	--------------------
-	
-	AddNetworkID	=	function(self, sID)
-		assert((type(sID) == "string"), "ERROR ...")
-		self._NETWORK_ID[sID]	=	true
-	end,
-	
-	SubNetworkID	=	function(self, sID)
-		assert((type(sID) == "string"), "ERROR ...")
-		self._NETWORK_ID[sID]	=	nil
-	end,
-	
-	IsValidClient	=	function(self, sID)
-		return ((type(sID) == "string") and (type(self._CLIENTS[sID]) == "table") and next(self._CLIENTS[sID])) and self._CLIENTS[sID] or false
-	end,
-	
-	IsValidMessage	=	function(self, sID)
-		return (type(sID) == "string") and self._NETWORK_ID[sID]
-	end,
-	
-	AddHook 		=	function(self, sID, fCallBack) self._HOOKS:AddHook(sID, fCallBack); end,
-}
+		self:SendToClient(sID, tData, iChannel, sFlag)
+
+		::continue::
+	end
+end
+
+function CORE:AddNetworkID(sID)
+	assert(isstring(sID), "[CORE] Invalid argument: sID must be a string")
+
+	self.NETWORK_ID[sID]	= true
+end
+
+function CORE:SubNetworkID(sID)
+	assert(isstring(sID), "[CORE] Invalid argument: sID must be a string")
+
+	self.NETWORK_ID[sID]	= nil
+end
+
+function CORE:IsValidClient(sID)
+	return (isstring(sID) and istable(self.CLIENTS[sID]) and next(self.CLIENTS[sID])) and self.CLIENTS[sID] or false
+end
+
+function CORE:IsValidMessage(sID)
+	return isstring(sID) and self.NETWORK_ID[sID]
+end
+
+function CORE:AddHook(sID, fCallBack)
+	self.HOOKS:AddHook(sID, fCallBack)
+end
