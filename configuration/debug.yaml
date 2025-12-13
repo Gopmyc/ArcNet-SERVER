@@ -3,6 +3,7 @@ HOT_RELOAD_TIME:  1
 PREFIX_DEFAULT:   "ARCNET"
 
 COLORS:
+
   # ┌───────────────────┐
   # │ FILES DEBUG COLOR │
   # └───────────────────┘
@@ -29,6 +30,23 @@ COLORS:
   WHITE:
     R: 255
     G: 255
+    B: 255
+  SUCCESS:
+    R: 46
+    G: 204
+    B: 113
+
+
+  # ┌─────────────────────┐
+  # │ NETWORK DEBUG COLOR │
+  # └─────────────────────┘
+  CLIENT:
+    R: 255
+    G: 241
+    B: 122
+  SERVER:
+    R: 156
+    G: 241
     B: 255
 
   # ┌───────────────────┐
