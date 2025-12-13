@@ -1,14 +1,14 @@
-local LOADER = {}
+
+
+local LOADER = {
+	PATH			= "srcs/core/loader/",
+}
 
 function LOADER:Initialize(sConfigPath, tLibraries)
 	assert(isstring(sConfigPath), "[LOADER] Configuration path must be a string")
 	assert(istable(tLibraries), "[LOADER] Libraries must be a table")
 
-	local tConfig			= self:LoadConfiguration(sConfigPath, tLibraries)
-	local tLoader			= self:CreateLoaderInstance(tConfig)
-	tLoader.SUBLOADER_BASE	= self:InitializeSubloaders(tLoader, tConfig)
-
-	tLoader.LIBRARY		= tLoader:GetLibrariesBase("libraries", tLoader)
+	local tLoader					= self:CreateLoaderInstance(self:LoadConfiguration(sConfigPath, tLibraries))
 
 	-- It's not clean, it needs to be changed later
 	local fMsgC	= MsgC
@@ -16,16 +16,38 @@ function LOADER:Initialize(sConfigPath, tLibraries)
 		return (istable(tLoader.CONFIG.DEBUG) and tLoader.CONFIG.DEBUG.ENABLED) and fMsgC(...) or (not istable(tLoader.CONFIG.DEBUG) and fMsgC(...))
 	end
 
+	tLoader.SUBLOADER_BASE			= self:InitializeSubloaders(tLoader, tLoader.CONFIG)
+
 	return tLoader
 end
 
 function LOADER:CreateLoaderInstance(tConfig)
 	local tLoaderConfig	= tConfig.LOADER
 	if not istable(tLoaderConfig) then return error("[CONFIG-LOADER] Missing 'LOADER' configuration table") end
-	tConfig.LOADER		= nil
+	tConfig.LOADER				= nil
 
-	local tLoader		= setmetatable(tLoaderConfig, {__index = LOADER})
-	tLoader.CONFIG		= tConfig
+	local tLoader				= setmetatable(tLoaderConfig, {__index = LOADER})
+	tLoader.CONFIG				= tConfig
+	
+	tLoader.LIBRARIES			= tLoader.LIBRARIES or {}
+	tLoader.LIBRARIES.BUFFER	= {}
+	for sName, sPath in pairs(tLoader.LIBRARIES or {}) do
+		if sName == "BUFFER" then goto continue end
+		-- TODO : Handling shared files
+		local tEnv		= setmetatable({ LIBRARY = {} }, { __index = _G })
+		local fChunk	= LoadFileInEnvironment(sPath, tEnv)
+
+		local bOk, sRunErr = pcall(fChunk)
+		if not bOk then
+			MsgC(tLoader.CONFIG.DEBUG.COLORS.ERROR, "[ENV-LOADER] Runtime error: " .. tostring(sRunErr))
+		end
+
+		tLoader.LIBRARIES[sName]		= nil
+		tLoader.LIBRARIES.BUFFER[sName]	= tEnv.LIBRARY
+
+		::continue::
+	end
+
 	return tLoader
 end
 
@@ -73,94 +95,18 @@ function LOADER:GetSubLoaderBase()
 	return self.SUBLOADER_BASE
 end
 
-function LOADER:DeepRawCopy(tTable, tSeen)
-    return self.LIBRARY.UTILS:DeepRawCopy(tTable, tSeen)
-end
-
-function LOADER:LoadInEnv(sFileSource, tSandEnv, sAccessPoint, tFileArgs, bLoadSubFolders) -- TODO
-	assert(isstring(sFileSource), "[ENV-LOADER] FileSource must be a string (#1)")
-	assert(istable(tSandEnv), "[ENV-LOADER] ENV must be a table (#2)")
-	assert(isstring(sAccessPoint), "[ENV-LOADER] AccessPoint must be a string (#3)")
-	assert(tFileArgs == nil or istable(tFileArgs), "[ENV-LOADER] FileArg must be a table or nil (#4)")
-
-	local tServerEnv, tClientEnv
-
-	local bIsFile = lovr.filesystem.isFile(sFileSource)
-	local bIsDir  = lovr.filesystem.isDirectory(sFileSource)
-
-	if not (bIsFile or bIsDir) then
-		MsgC(Color(241, 196, 15), "[WARNING][ENV-LOADER] File or folder not found: " .. sFileSource)
-		return nil
-	end
-
-	if bIsDir then
-		sFileSource = sFileSource:sub(-1) ~= "/" and sFileSource .. "/" or sFileSource
-
-		if bLoadSubFolders then
-			local sClient = sFileSource .. "client/cl_init.lua"
-			local sServer = sFileSource .. "server/sv_init.lua"
-
-			tServerEnv = SERVER and lovr.filesystem.isFile(sServer) and self:LoadInEnv(sServer, tSandEnv, sAccessPoint, tFileArgs) or nil
-			tClientEnv = CLIENT and lovr.filesystem.isFile(sClient) and self:LoadInEnv(sClient, tSandEnv, sAccessPoint, tFileArgs) or nil
-		end
-		
-		sFileSource = sFileSource .. "init.lua"
-	end
-
-	local sCode = lovr.filesystem.read(sFileSource)
-	if not sCode then
-		MsgC(Color(255, 0, 0), "[ENV-LOADER] Cannot read file: " .. sFileSource)
-		return nil
-	end
-
-	local fChunk, sCompileErr = loadstring(sCode, sFileSource)
-	if not fChunk then
-		MsgC(Color(255, 0, 0), "[ENV-LOADER] Compile error: " .. tostring(sCompileErr))
-		return nil
-	end
-
-	local tEnv = setmetatable(self:DeepRawCopy(tSandEnv), { __index = _G })
-
-	tEnv[sAccessPoint].GetDependence = function(_, sKey) return tFileArgs and tFileArgs[sKey] end
-	tEnv[sAccessPoint].__PATH = sFileSource:match("^(.*[/\\])[^/\\]+%.lua$") or nil
-	tEnv[sAccessPoint].__NAME = sFileSource:match("([^/\\]+)%.lua$") or "compiled-chunk"
-
-	local tLib = tEnv[sAccessPoint].__LIBRARIES
-	if istable(tLib) and isstring(tLib.__PATH) and isfunction(tLib.__Load) then
-		tLib.__BUFFER = tLib.__Load((tEnv[sAccessPoint].__PATH or "") .. tLib.__PATH)
-	end
-
-	setfenv(fChunk, tEnv)
-
-	local bOk, sRunErr = pcall(fChunk)
-	if not bOk then
-		MsgC(Color(255, 0, 0), "[ENV-LOADER] Runtime error: " .. tostring(sRunErr))
-	end
-
-	assert(istable(tEnv[sAccessPoint]), "[ENV-LOADER] Access point '" .. sAccessPoint .. "' is not a table or unreachable")
-
-	local tSubEnv = (SERVER and tServerEnv) or (CLIENT and tClientEnv) or {}
-	for sKey, vValue in pairs(tSubEnv) do
-		if sKey ~= "__PATH" and sKey ~= "__NAME" and sKey ~= "__LIBRARIES" then
-			tEnv[sAccessPoint][sKey] = vValue
-		end
-	end
-
-	return tEnv[sAccessPoint]
-end
-
 function LOADER:LoadSubLoader(sPath, Content, bShared, sID)
 	assert(isstring(sPath), "[SUB-LOADER] Path must be a string")
 	assert(Content ~= nil, "[SUB-LOADER] Content must be a table")
 	assert(isbool(bShared), "[SUB-LOADER] Shared flag must be a boolean")
 
 	if bShared and SERVER then
-		-- AddCSLuaFile(sPath)
+		self:GetLibrary("RESSOURCES"):AddCSLuaFile(sPath)
 	end
 
 	local bShouldLoad	= (bShared and CLIENT) or SERVER
 	if bShouldLoad then
-		local tSubLoader	= self:LoadInEnv(sPath,
+		local tSubLoader	= self:GetLibrary("RESSOURCES"):LoadInEnv(sPath,
 		{
 			SUBLOADER = (function()
 				local _			= {}
@@ -189,7 +135,7 @@ function LOADER:LoadSubLoader(sPath, Content, bShared, sID)
 				end
 
 				function _:GetScript(sName)
-					local FileLoaded = self:GetLoader():GetScript(sName)
+					local FileLoaded = self:GetLoader():GetLibrary("RESSOURCES"):GetScript(sName)
 
 					if FileLoaded == nil then
 						for sFileKey, tFile in pairs(self:GetBuffer()) do
@@ -220,252 +166,74 @@ function LOADER:GetConfig()
 	return self.CONFIG
 end
 
-function LOADER:GetScript(sName, bDebug)
-	assert(isstring(sName), "[LOADER] The 'GetScript' method only accepts a string as an argument")
-
-	if not bDebug then
-		for sGroupKey, tGroup in pairs(self.RESSOURCES) do
-			if istable(tGroup) and tGroup[sName] then
-				return tGroup[sName]
-			end
-		end
-		return nil
-	end
-
-	MsgC(Color(52,152,219), "\n[LOADER] --- Begin Script Search ---\n")
-
-	local bFound	= false
-	for sGroupKey, tGroup in pairs(self.RESSOURCES) do
-		if not (isstring(sGroupKey) and istable(tGroup)) then
-			MsgC(Color(231,76,60), string.format("  [!] Invalid group: key=%s (type=%s)\n", tostring(sGroupKey), type(tGroup)))
-			goto continue
-		end
-
-		local iCount = table.Count(tGroup)
-		MsgC(Color(52,152,219), string.format("\n[GROUP] %s  (%d scripts)\n", sGroupKey, iCount))
-
-		local bCompact = iCount > 20
-		local bGroupFound = false
-
-		for sFileKey, fFileLoaded in pairs(tGroup) do
-			local bIsMatch = (sFileKey == sName)
-
-			if not bCompact then
-				if bIsMatch then
-					MsgC(Color(46,204,113), string.format("    ✔ %s (found)\n", sFileKey))
-				else
-					MsgC(Color(127,140,141), string.format("    • %s\n", sFileKey))
-				end
-			end
-
-			if bIsMatch then
-				bFound = true
-				bGroupFound = true
-				MsgC(Color(46,204,113), string.format("\n[LOADER] Script '%s' successfully located.\n", sName))
-				MsgC(Color(52,152,219), "[LOADER] --- End Script Search ---\n\n")
-				return fFileLoaded
-			end
-		end
-
-		if not bGroupFound and not bCompact then
-			MsgC(Color(149,165,166), "    (no match)\n")
-		end
-
-		::continue::
-	end
-
-	MsgC(Color(231,76,60), string.format("\n[LOADER] Script '%s' not found in any group.\n", sName))
-	MsgC(Color(52,152,219), "[LOADER] --- End Script Search ---\n\n")
-	return nil
-end
-
-function LOADER:DebugPrint(sMsg, sMsgType)
-	assert(isstring(sMsg) or istable(sMsg),	"[DEBUG-PRINT] Message must be a string or a table")
-	assert(isstring(sMsgType),				"[DEBUG-PRINT] Message type must be a string")
-
-	local tConfig	= self:GetConfig().DEBUG
-	local sPrefix	= "["..sMsgType.."]"
-	local tColor	= tConfig.COLORS[sMsgType] or tConfig.COLORS.DEFAULT
-
-	local tColorServer	= Color(156, 241, 255, 200)
-	local tColorClient	= Color(255, 241, 122, 200)
-
-	if istable(sMsg) then sMsg=util.TableToJSON(sMsg, true); end
-
-    return MsgC(
-		tConfig.COLORS.DEFAULT,
-		tConfig.PREFIX_DEFAULT,
-        tColor,
-		sPrefix,
-        tConfig.COLORS.WHITE,
-		" " .. string.format("%-60s", sMsg),
-        SERVER and tColorServer or CLIENT and tColorClient,
-        " STATE : " .. (SERVER and "SERVER" or "CLIENT").."\n",
-        tConfig.COLORS.WHITE
-    )
-end
-
-function LOADER:IncludeFiles(FileSource, tSide, tFileArgs, tSandEnv, bIsBinary)
-	assert(isstring(FileSource) or isfunction(FileSource),				"[LOADER] The 'IncludeFiles' method requires a valid file path as a string or a function [#1]")
-	assert(istable(tSide),												"[LOADER] The 'tSide' argument must be a table with 'client' and 'server' keys [#2]")
-	assert((tFileArgs == nil) or istable(tFileArgs),					"[LOADER] The 'tFileArgs' argument must be a table or nil [#3]")
-
-	if (SERVER and tSide.client and isstring(FileSource)) and not lovr.filesystem.isDirectory(FileSource) then
-		-- AddCSLuaFile(FileSource)
-	end
-
-	local bShouldLoad	= ((CLIENT and tSide.client) or (SERVER and tSide.server))
-	if not bShouldLoad then return nil end
-
-	local bIsEnvLoad	= (istable(tSandEnv) and isstring(tSandEnv.ACCESS_POINT) and istable(tSandEnv.CONTENT))
-	local bIsLuaFile	= (isstring(FileSource) and string.find(FileSource, "%.lua$"))
-
-	return
-	(
-		bShouldLoad and
-		(
-			bIsBinary and
-			(
-				self:IncludeBinaryFile(FileSource)
-			)
-			or bIsEnvLoad and
-			(
-				self:LoadInEnv(FileSource, tSandEnv.CONTENT, tSandEnv.ACCESS_POINT, tFileArgs)
-			)
-			or isfunction(FileSource) and
-			(
-				FileSource(tFileArgs)
-			)
-			or bIsLuaFile and
-			(
-				require(FileSource)(tFileArgs)
-			)
-			or
-				MsgC(Color(255, 0, 0), "[LOADER] Failed to include file: ", tostring(FileSource), "\n")
-		)
-	)
-	or
-		nil
-end
-
-function LOADER:GetDependencies(tDependencies, tSides, tSubLoader)
-	assert(istable(tDependencies), "[LOADER] The 'getDependencies' method requires a table of dependencies")
-	assert(istable(tSides), "[LOADER] The 'tSides' argument must be a table with 'client' and 'server' keys")
-
-	local tDependenciesFinded	= {}
-
-	local bShoulLoad			= (CLIENT and tSides.client) or (SERVER and tSides.server)
-	if not bShoulLoad then return tDependenciesFinded end
-
-	local tScopeSearch			= (istable(tSubLoader) and isfunction(tSubLoader.GetScript)) and tSubLoader or self
-	for iID, sDependence in ipairs(tDependencies) do
-		if not isstring(sDependence) then
-			self:DebugPrint("[LOADER] Invalid dependency at index '"..iID.."': expected string, got "..type(sDependence), "WARNING")
-			goto continue
-		end
-
-		tDependenciesFinded[sDependence]	= tScopeSearch:GetScript(sDependence)
-
-		if tDependenciesFinded[sDependence] == nil then
-			self:DebugPrint("[LOADER] The dependency '" .. sDependence .. "' was not found.", "WARNING") 
-		end
-
-		::continue::
-	end
-
-	return tDependenciesFinded
-end
-
-function LOADER:IncludeBinaryFile(sFilePath) -- <-- Useful for a decoupled logic
-	return require(sFilePath)
-end
-
-function LOADER:GetLuaFiles(sFolderPath, tFilesShared)
-	if CLIENT then return end
-
-	assert(isstring(sFolderPath), "[LOADER] GetLuaFiles requires a non-empty string path")
-
-	tFilesShared		= istable(tFilesShared) and tFilesShared or {}
-	local sCleanPath	= sFolderPath:sub(-1) == "/" and sFolderPath:sub(1, -2) or sFolderPath
-	local bExists		= lovr.filesystem.isFile(sCleanPath)
-
-	if not bExists then return self:DebugPrint("Path not found: " .. sCleanPath, "WARNING") end
-		
-	local tFiles, tDirs	= FilesFind(sCleanPath .. "/*")
-
-	for _, sFile in ipairs(tFiles) do
-		local sPathFull = sCleanPath .. "/" .. sFile
-		tFilesShared[#tFilesShared + 1] = sPathFull
-	end
-		
-	for _, sDir in ipairs(tDirs) do 
-		self:GetLuaFiles(sCleanPath .. "/" .. sDir, tFilesShared)
-	end
-
-	return tFilesShared
-end
-
 function LOADER:GetLibrariesBase(sBasePath, tParent)
 	local function scan(p,t)t=t or{}for _,f in ipairs(FilesFind(p.."/*"))do t[#t+1]=p.."/"..f end for _,d in ipairs(select(2,FilesFind(p.."/*")))do scan(p.."/"..d,t) end return t end
 
 	local tLibraries	= {}
-	tLibraries.__PATH	= isstring(sBasePath) and sBasePath or "libraries"
-	tLibraries.__BUFFER	= {}
+	tLibraries.PATH		= isstring(sBasePath) and sBasePath or "libraries"
+	tLibraries.BUFFER	= {}
 
-	tLibraries.__Load		= function(sPath)
-		local tBuffer	= {}
+	tLibraries.Load	= function(tLibraries, sPath)
+		assert(isstring(sPath), "[LIBRARY {LOADER}] Path must be a string")
+
 		local tBoth		= {
 			["sh_"]	= function(sPath)
-				-- return SERVER and (AddCSLuaFile(sPath) or true) or CLIENT
+				return SERVER and (self:GetLibrary("RESSOURCES"):AddCSLuaFile(sPath) or true) or CLIENT
 			end,
 			["sv_"]	=	function(sPath)
 				return SERVER
 			end,
 			["cl_"]	=	function(sPath)
-				-- return SERVER and AddCSLuaFile(sPath) or CLIENT
+				return SERVER and self:GetLibrary("RESSOURCES"):AddCSLuaFile(sPath) or CLIENT
 			end,
 		}
 		tBoth["shared"]	= tBoth["sh_"]
 		tBoth["server"]	= tBoth["sv_"]
 		tBoth["client"]	= tBoth["cl_"]
 		
-		for iID, sFile in ipairs(scan(sPath)) do
-			local sFileName									= sFile:match("([^/\\]+)%.lua$")
-			local sLibFolder								= sFile:match("libraries/([^/\\]+)")
-			local sPrefix									= sFileName:sub(1, 3)
-			local fSide										= tBoth[sLibFolder] or tBoth[sPrefix] or tBoth["sh_"]
+		for iID, sFile in ipairs(self:GetLuaFiles(sPath)) do
+			local sFileName															= sFile:match("([^/\\]+)%.lua$")
+			local sLibFolder														= sFile:match("libraries/([^/\\]+)")
+			local sPrefix															= sFileName:sub(1, 3)
+			local fSide																= tBoth[sLibFolder] or tBoth[sPrefix] or tBoth["sh_"]
 
 			if not fSide(sFile) then goto continue end
-			tBuffer[string.upper(sFile:match("libraries/(.-)%.lua$"))]	= self:LoadInEnv(sFile, { LIBRARY = {} }, "LIBRARY", {}, false)
+			tLibraries.BUFFER[string.upper(sFile:match("libraries/(.-)%.lua$"))]	= self:GetLibrary("RESSOURCES"):LoadInEnv(sFile, { LIBRARY = {} }, "LIBRARY", {}, false)
 
 			::continue::
 		end
-
-		return tBuffer
 	end
 
 	if istable(tParent) then
-		tParent.GetLibrary	= function(self, sName)
-			assert(isstring(sName) and #sName > 0, "[MODULE {LOADER}] Name must be a non-empty string")
-			return self.__LIBRARIES.__BUFFER[sName]
-		end
-
-		tParent.PrintLibraries = function(self)
-			if not istable(self.__LIBRARIES.__BUFFER) then
-				return MsgC(Color(231, 76, 60), "[LIBRARY] No libraries loaded.\n")
-			end
-		
-			for sID, _ in pairs(self.__LIBRARIES.__BUFFER) do
-				MsgC(
-					Color(52, 152, 219), "[LIBRARY] ",
-					Color(46, 204, 113), "Loaded: ",
-					Color(236, 240, 241), sID, "\n"
-				)
-			end
-		end
+		tParent.GetLibrary		= LOADER.GetLibrary
+		tParent.PrintLibraries	= LOADER.PrintLibraries
 	end
 
 	return tLibraries
+end
+
+function LOADER:GetLibrary(sName)
+	assert(isstring(sName) and #sName > 0, "[LIBRARY] Library name must be a non-empty string")
+	return (self.LIBRARIES and self.LIBRARIES.BUFFER and self.LIBRARIES.BUFFER[sName])
+		or MsgC(Color(231, 76, 60), "[LIBRARY] Library not found: " .. sName .. "\n")
+end
+
+function LOADER:PrintLibraries()
+	if not istable(self.LIBRARIES) then
+		return MsgC(self:GetConfig().DEBUG.COLORS.ERROR, "[LIBRARY] 'LIBRARIES' table not initialized.\n")
+	end
+
+	if not istable(self.LIBRARIES.BUFFER) or not next(self.LIBRARIES.BUFFER) then
+		return MsgC(self:GetConfig().DEBUG.COLORS.ERROR, "[LIBRARY] No libraries loaded.\n")
+	end
+		
+	for sID, _ in pairs(self.LIBRARIES.BUFFER) do
+		MsgC(
+			Color(52, 152, 219), "[LIBRARY] ",
+			Color(46, 204, 113), "Loaded: ",
+			Color(236, 240, 241), sID, "\n"
+		)
+	end
 end
 
 return LOADER
