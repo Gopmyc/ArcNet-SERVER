@@ -1,8 +1,6 @@
 -- Fetch default config server settings
--- Fetch enet module
 
-print(CORE:GetDependence("enet"))
-
+-- TODO : Find a way to fetch config in Env, like CORE:GetConfig()
 function CORE:Initialize()
 	return setmetatable({
 		CLIENTS			= setmetatable({}, {__mode = "kv"}),
