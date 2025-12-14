@@ -13,3 +13,32 @@ LOAD_PRIORITY:
 LIBRARIES:
   RESSOURCES:   "srcs/core/loader/libraries/ressources.lua"
   FINDER:       "srcs/core/loader/libraries/finder.lua"
+
+RULES_FILES:
+  1:
+    FIELD:  ROOT
+    TYPE:   table
+  2:
+    FIELD:  KEY
+    TYPE:   string
+  3:
+    FIELD:  PATH
+    TYPE:   string
+  4:
+    FIELD:  ARGS
+    TYPE:   table
+  5:
+    FIELD:  IS_BINARY
+    TYPE:   bool
+  6:
+    FIELD:  LOAD_SUBFOLDERS
+    TYPE:   bool
+  7:
+    FIELD:  SIDES
+    TYPE:   table
+  8:
+    FIELD:  SIDES.CLIENT
+    TYPE:   bool
+  9:
+    FIELD:  SIDES.SERVER
+    TYPE:   bool
