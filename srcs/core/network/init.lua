@@ -25,7 +25,7 @@ function CORE:Update(iDt)
 end
 
 function CORE:Close()
-	if not self.HOST then return MsgC(Color(231,76,60), "[CORE] HOST is already nil on 'Close'\n") end
+	if not self.HOST then return MsgC(Color(231,76,60), "[CORE] HOST is already nil on 'Close") end
 
 	self.HOST:flush()
 	self.HOST	= nil
@@ -38,7 +38,7 @@ function CORE:SendToClient(iID, sMessageID, tData, iChannel, sFlag)
 
 	local tPeer	= self:IsValidClient(sID)
 	if not tPeer then
-		return MsgC(Color(231,76,60), "[CORE] Attempted to send message to unregistered Client [ID : "..sID.."]  : "..tostring(tPeer).."\n")
+		return MsgC(Color(231,76,60), "[CORE] Attempted to send message to unregistered Client [ID : "..sID.."]  : "..tostring(tPeer))
 	end
 
 	self.EVENTS:Call(self, self.EVENTS:BuildEvent("send", tPeer, {
