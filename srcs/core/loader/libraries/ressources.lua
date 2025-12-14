@@ -71,7 +71,7 @@ function LIBRARY:GetDependencies(tDependencies, tSides, tSubLoader)
 
 	local tDependenciesFinded	= {}
 
-	local bShoulLoad			= (CLIENT and tSides.client) or (SERVER and tSides.server)
+	local bShoulLoad			= (CLIENT and tSides.CLIENT) or (SERVER and tSides.SERVER)
 	if not bShoulLoad then return tDependenciesFinded end
 
 	local tScopeSearch			= (istable(tSubLoader) and isfunction(tSubLoader.GetScript)) and tSubLoader or self
@@ -110,11 +110,11 @@ function LIBRARY:IncludeFiles(FileSource, tSide, tFileArgs, tSandEnv, bIsBinary)
 	assert(istable(tSide),									"[RESSOURCES] The 'tSide' argument must be a table with 'client' and 'server' keys [#2]")
 	assert((tFileArgs == nil) or istable(tFileArgs),		"[RESSOURCES] The 'tFileArgs' argument must be a table or nil [#3]")
 
-	if (SERVER and tSide.client and isstring(FileSource)) and not lovr.filesystem.isDirectory(FileSource) then
-		self:GetLibrary("RESSOURCES"):AddCSLuaFile(FileSource)
+	if (SERVER and tSide.CLIENT and isstring(FileSource)) and not lovr.filesystem.isDirectory(FileSource) then
+		self:AddCSLuaFile(FileSource)
 	end
 
-	local bShouldLoad	= ((CLIENT and tSide.client) or (SERVER and tSide.server))
+	local bShouldLoad	= ((CLIENT and tSide.CLIENT) or (SERVER and tSide.SERVER))
 	if not bShouldLoad then return nil end
 
 	local bIsEnvLoad	= (istable(tSandEnv) and isstring(tSandEnv.ACCESS_POINT) and istable(tSandEnv.CONTENT))
