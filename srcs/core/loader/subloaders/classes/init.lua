@@ -21,12 +21,9 @@ function SUBLOADER:Initialize(tContent)
 	self.__BUFFER							= {}
 
 	for iID, tFile in ipairs(tContent) do
-		if not (istable(tFile) and isstring(tFile.path) and isstring(tFile.key)) then
-			MsgC(self:GetLoader():GetConfig().DEBUG.COLORS.ERROR, "[CLASSES SUB-LOADER] Invalid file entry at index '" ..iID.. "' for " .. self:GetID())
-			goto continue
-		end
+		if not self:GetLoader():GetSubLoaderBase():CheckFileStructureIntegrity(iID, tFile) then goto continue end
 
-		self.__BUFFER[tFile.key] = self:LoadFile(tFile)
+		self.__BUFFER[tFile.KEY] = self:LoadFile(tFile)
 
 		::continue::
 	end
@@ -37,15 +34,11 @@ function SUBLOADER:Initialize(tContent)
 end
 
 function SUBLOADER:LoadFile(tFile, fChunk)
-	assert(istable(tFile),			"[CLASSES SUB-LOADER] File entry must be a table")
-	assert(isstring(tFile.path),	"[CLASSES SUB-LOADER] File entry 'path' must be a string")
-	assert(isstring(tFile.key),		"[CLASSES SUB-LOADER] File entry 'key' must be a string")
-
 	local bIsReload		= isfunction(fChunk)
 	local bShared		= self.tFileSides.client
-	local _				= self:GetLoader():GetLibrary("RESSOURCES"):IncludeFiles(bIsReload and fChunk or tFile.path, self.tFileSides, nil, self:GetEnv())
+	local _				= self:GetLoader():GetLibrary("RESSOURCES"):IncludeFiles(bIsReload and fChunk or tFile.PATH, self.tFileSides, nil, self:GetEnv())
 
-	MsgC(self:GetLoader():GetConfig().DEBUG.COLORS.SUCCESS, "The file '" .. tFile.key .. "' was " .. (bIsReload and "reload" or "loaded") .." successfully for " .. self:GetID() .. "\n")
+	MsgC(self:GetLoader():GetConfig().DEBUG.COLORS.SUCCESS, "\tThe file '" .. tFile.KEY .. "' was " .. (bIsReload and "reload" or "loaded") .." successfully for " .. self:GetID())
 
 	return _, bShared
 end
