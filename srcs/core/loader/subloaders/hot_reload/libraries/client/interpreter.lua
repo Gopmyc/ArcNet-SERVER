@@ -1306,7 +1306,7 @@ function LIBRARY:Interpret(sByteCode)
 	end, function(sErr)
 		MsgC(
 			Color(231, 76, 60), "[SUBLOADER] Interpretation failed: ",
-			Color(255, 255, 255), tostring(sErr), "\n"
+			Color(255, 255, 255), tostring(sErr)
         )
         debug.Trace()
 	end, sByteCode)
