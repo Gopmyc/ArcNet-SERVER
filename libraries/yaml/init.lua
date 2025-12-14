@@ -134,7 +134,7 @@ local tokens = {
   {":",         "^:"},
   {"pipe",      "^(|)(%d*[+%-]?)", sep = "\n"},
   {"pipe",      "^(>)(%d*[+%-]?)", sep = " "},
-  {"id",        "^([%w][%w %-_]*)(:[%s%c])"},
+  {"id",        "^([%w/_][%w/ _-]*)(:[%s%c])"},
   {"string",    "^[^%c]+", noinline = true},
   {"string",    "^[^,%]}%c ]+"}
 };
@@ -465,41 +465,54 @@ Parser.parseTextBlock = function (self, sep)
   return result
 end
 
-Parser.parseHash = function (self, hash)
-  hash = hash or {}
-  local indents = 0
+Parser.parseHash = function(self, hash)
+	hash = hash or {}
+	local indents = 0
 
-  if self:isInline() then
-    local id = self:advanceValue()
-    self:expect(":", "expected semi-colon after id")
-    self:ignoreSpace()
-    if self:accept("indent") then
-      indents = indents + 1
-      hash[id] = self:parse()
-    else
-      hash[id] = self:parse()
-      if self:accept("indent") then
-        indents = indents + 1
-      end
-    end
-    self:ignoreSpace();
-  end
+	if self:isInline() then
+		local id = self:advanceValue()
+		self:expect(":", "expected semi-colon after id")
+		self:ignoreSpace()
+		if self:accept("indent") then
+			indents = indents + 1
+			hash[id] = self:parse()
+		else
+			hash[id] = self:parse()
+			if self:accept("indent") then
+				indents = indents + 1
+			end
+		end
+		self:ignoreSpace()
+	end
 
-  while self:peekType("id") do
-    local id = self:advanceValue()
-    id = tonumber(id) or id
-    self:expect(":","expected semi-colon after id")
-    self:ignoreSpace()
-    hash[id] = self:parse()
-    self:ignoreSpace();
-  end
+	while true do
+		while self:peek() and (
+			self:peekType("comment") or
+			self:peekType("space") or
+			self:peekType("indent") or
+			(self:peekType("string") and self:peek()[2][1]:match("^%s*$"))
+		) do
+			self:advance()
+		end
 
-  while indents > 0 do
-    self:expectDedent("expected dedent")
-    indents = indents - 1
-  end
+		if not self:peekType("id") then
+			break
+		end
 
-  return hash
+		local id = self:advanceValue()
+		id = tonumber(id) or id
+		self:expect(":", "expected semi-colon after id")
+		self:ignoreSpace()
+		hash[id] = self:parse()
+		self:ignoreSpace()
+	end
+
+	while indents > 0 do
+		self:expectDedent("expected dedent")
+		indents = indents - 1
+	end
+
+	return hash
 end
 
 Parser.parseInlineHash = function (self)
