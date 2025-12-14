@@ -19,13 +19,10 @@ function SUBLOADER:Initialize(tContent)
 	self.__ENV.CONTENT.CORE.__LIBRARIES	= self:GetLoader():GetLibrariesBase("libraries", self.__ENV.CONTENT.CORE)
 	self.__BUFFER						= {}
 		
-	for sID, tFile in ipairs(tContent) do -- TODO : Make a methode in SUBLOADER_BASE to check structure intergrity for each file in config and throw a error message ilf struct is invalide, check if has a PATH, KEY, ARGS, ect...
-		if not (istable(tFile) and isstring(tFile.path) and istable(tFile.sides) and isstring(tFile.key) and istable(tFile.args)) then
-			MsgC(self:GetLoader():GetConfig().DEBUG.COLORS.ERROR, "[OBJECTS SUB-LOADER] Invalid file entry at index '" ..sID.. "' for " .. self:GetID())
-			goto continue
-		end
+	for iID, tFile in ipairs(tContent) do
+		if not self:GetLoader():GetSubLoaderBase():CheckFileStructureIntegrity(iID, tFile) then goto continue end
 
-		self.__BUFFER[tFile.key]	= self:LoadFile(tFile)
+		self.__BUFFER[tFile.KEY]	= self:LoadFile(tFile)
 
 		::continue::
 	end
@@ -36,23 +33,17 @@ function SUBLOADER:Initialize(tContent)
 end
 
 function SUBLOADER:LoadFile(tFile, fChunk)
-	assert(istable(tFile),			"[OBJECTS SUB-LOADER] File entry must be a table")
-	assert(isstring(tFile.path),	"[OBJECTS SUB-LOADER] File entry 'path' must be a string")
-	assert(istable(tFile.sides),	"[OBJECTS SUB-LOADER] File entry 'sides' must be a table")
-	assert(isstring(tFile.key),		"[OBJECTS SUB-LOADER] File entry 'key' must be a string")
-	assert(istable(tFile.args),		"[OBJECTS SUB-LOADER] File entry 'args' must be a table")
-
 	local bIsReload		= isfunction(fChunk)
-	local bShared		= tFile.sides.client
-	local tDependencies	= self:GetLoader():GetLibrary("RESSOURCES"):GetDependencies(tFile.args, tFile.sides, self)
+	local bShared		= tFile.SIDES.CLIENT
+	local tDependencies	= self:GetLoader():GetLibrary("RESSOURCES"):GetDependencies(tFile.ARGS, tFile.SIDES, self)
 
-	if not istable(tDependencies) and (#tFile.args > 0) then 
-		return MsgC(self:GetLoader():GetConfig().DEBUG.COLORS.ERROR, "[OBJECTS SUB-LOADER] The dependencies for the file '" ..tFile.key.. "' could not be resolved.\n")
+	if not istable(tDependencies) and (#tFile.ARGS > 0) then 
+		return MsgC(self:GetLoader():GetConfig().DEBUG.COLORS.ERROR, "[OBJECTS SUB-LOADER] The dependencies for the file '" ..tFile.KEY.. "' could not be resolved.")
 	end
 
-	local _				= self:GetLoader():GetLibrary("RESSOURCES"):IncludeFiles(bIsReload and fChunk or tFile.path, tFile.sides, tDependencies, self:GetEnv(), tFile.is_binary)
+	local _				= self:GetLoader():GetLibrary("RESSOURCES"):IncludeFiles(bIsReload and fChunk or tFile.PATH, tFile.SIDES, tDependencies, self:GetEnv(), tFile.IS_BINARY)
 
-	MsgC(self:GetLoader():GetConfig().DEBUG.COLORS.SUCCESS, "The file '" .. tFile.key .. "' was " .. (bIsReload and "reload" or "loaded") .." successfully for " .. self:GetID() .. "\n")
+	MsgC(self:GetLoader():GetConfig().DEBUG.COLORS.SUCCESS, "\tThe file '" .. tFile.KEY .. "' was " .. (bIsReload and "reload" or "loaded") .." successfully for " .. self:GetID())
 
 	return _, bShared
 end
