@@ -155,7 +155,7 @@ function LIBRARY:Compress(sInput)
 	function(sErr)
 		MsgC(
 			Color(231, 76, 60), "[SUBLOADER] Compression failed: ",
-			Color(255, 255, 255), tostring(sErr), "\n"
+			Color(255, 255, 255), tostring(sErr)
 		)
 		debug.Trace()
 	end, sInput)
@@ -171,7 +171,7 @@ function LIBRARY:Decompress(sInput)
 	function(sErr)
 		MsgC(
 			Color(231, 76, 60), "[SUBLOADER] Decompression failed: ",
-			Color(255, 255, 255), tostring(sErr), "\n"
+			Color(255, 255, 255), tostring(sErr)
 		)
 		debug.Trace()
 	end, sInput)
