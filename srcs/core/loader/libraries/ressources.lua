@@ -77,14 +77,14 @@ function LIBRARY:GetDependencies(tDependencies, tSides, tSubLoader)
 	local tScopeSearch			= (istable(tSubLoader) and isfunction(tSubLoader.GetScript)) and tSubLoader or self
 	for iID, sDependence in ipairs(tDependencies) do
 		if not isstring(sDependence) then
-			MsgC(Color(241, 196, 15), "[WARNING][RESSOURCES] Invalid dependency at index '"..iID.."': expected string, got "..type(sDependence) .. "\n")
+			MsgC(Color(241, 196, 15), "[WARNING][RESSOURCES] Invalid dependency at index '"..iID.."': expected string, got "..type(sDependence))
 			goto continue
 		end
 
 		tDependenciesFinded[sDependence]	= tScopeSearch:GetScript(sDependence)
 
 		if tDependenciesFinded[sDependence] == nil then
-			MsgC(Color(241, 196, 15), "[WARNING][RESSOURCES] The dependency '" .. sDependence .. "' was not found.\n") 
+			MsgC(Color(241, 196, 15), "[WARNING][RESSOURCES] The dependency '" .. sDependence .. "' was not found.") 
 		end
 
 		::continue::
@@ -141,7 +141,7 @@ function LIBRARY:IncludeFiles(FileSource, tSide, tFileArgs, tSandEnv, bIsBinary)
 				require(FileSource)(tFileArgs)
 			)
 			or
-				MsgC(Color(255, 0, 0), "[RESSOURCES] Failed to include file: ", tostring(FileSource), "\n")
+				MsgC(Color(255, 0, 0), "[RESSOURCES] Failed to include file: ", tostring(FileSource))
 		)
 	)
 	or
