@@ -326,7 +326,21 @@ Parser.parse = function (self)
   elseif c.token[1] == "id" then
     result = self:parseHash()
   elseif c.token[1] == "string" then
-    result = self:parseString("\n")
+    local val = self:parseString("\n")
+    if not c.token.force_text then
+        if val == "true" then
+            val = true
+        elseif val == "false" then
+            val = false
+        elseif val == "null" then
+            val = nil
+        elseif val:match("^%-?%d+%.%d+$") then
+            val = tonumber(val)
+        elseif val:match("^%-?%d+$") then
+            val = tonumber(val)
+        end
+    end
+    result = val
   elseif c.token[1] == "timestamp" then
     result = self:parseTimestamp()
   elseif c.token[1] == "number" then
