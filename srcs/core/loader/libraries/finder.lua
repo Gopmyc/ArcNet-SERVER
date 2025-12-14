@@ -6,7 +6,7 @@ function LIBRARY:GetLuaFiles(sFolderPath, tFilesShared)
 	local bExists		= lovr.filesystem.isDirectory(sCleanPath)
 
 	if not bExists then
-		return tFilesShared, MsgC(Color(241, 196, 15),  string.format("[WARNING] Path : '%s' not found.\n", sCleanPath))
+		return tFilesShared, MsgC(Color(241, 196, 15),  string.format("[WARNING] Path : '%s' not found", sCleanPath))
 	end
 		
 	local tFiles, tDirs	= FilesFind(sCleanPath)
