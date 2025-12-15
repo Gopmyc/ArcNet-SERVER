@@ -35,15 +35,30 @@ end
 function SUBLOADER:LoadFile(tFile, fChunk)
 	local bIsReload		= isfunction(fChunk)
 	local bShared		= tFile.SIDES.CLIENT
-	local tDependencies	= self:GetLoader():GetLibrary("RESSOURCES"):GetDependencies(tFile.ARGS, tFile.SIDES, self)
+	local tDependencies	= self:GetLoader():GetLibrary("RESSOURCES"):ResolveDependencies(tFile.ARGS, tFile.SIDES, self)
+	local tCapabilities	= self:GetLoader():GetLibrary("RESSOURCES"):ResolveCapabilities(self:GetLoader():GetConfig(), tFile.CAPABILITIES)
 
 	if not istable(tDependencies) and (#tFile.ARGS > 0) then 
-		return MsgC(self:GetLoader():GetConfig().DEBUG.COLORS.ERROR, "[OBJECTS SUB-LOADER] The dependencies for the file '" ..tFile.KEY.. "' could not be resolved.")
+		return MsgC(
+			self:GetLoader():GetConfig().DEBUG.COLORS.ERROR,
+			"[OBJECTS SUB-LOADER] The dependencies for the file '" ..tFile.KEY.. "' could not be resolved."
+		)
 	end
 
-	local _				= self:GetLoader():GetLibrary("RESSOURCES"):IncludeFiles(bIsReload and fChunk or tFile.PATH, tFile.SIDES, tDependencies, self:GetEnv(), tFile.IS_BINARY)
+	local _				= self:GetLoader():GetLibrary("RESSOURCES"):IncludeFiles(
+		bIsReload and fChunk or tFile.PATH,
+		tFile.SIDES,
+		tDependencies,
+		self:GetEnv(),
+		tFile.IS_BINARY,
+		tFile.LOAD_SUBFOLDERS,
+		tCapabilities
+	)
 
-	MsgC(self:GetLoader():GetConfig().DEBUG.COLORS[self:GetID()], "\tThe file '" .. tFile.KEY .. "' was " .. (bIsReload and "reload" or "loaded") .." successfully for " .. self:GetID())
+	MsgC(
+		self:GetLoader():GetConfig().DEBUG.COLORS[self:GetID()],
+		"\tThe file '" .. tFile.KEY .. "' was " .. (bIsReload and "reload" or "loaded") .." successfully for " .. self:GetID()
+	)
 
 	return _, bShared
 end
