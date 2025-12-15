@@ -1,5 +1,6 @@
 LIBRARY.RESSOURCES	= {}
 
+-- TODO : Cut the method into smaller function and improve to overload .../client/libraries/ or .../server/libraries/ in .../libraries/ and give acces to sub part (client/ or server/) at .../libraries/
 function LIBRARY:LoadInEnv(sFileSource, tSandEnv, sAccessPoint, tFileArgs, bLoadSubFolders, tCapabilities)
 	assert(isstring(sFileSource),					"[ENV-RESSOURCES] FileSource must be a string (#1)")
 	assert(istable(tSandEnv),						"[ENV-RESSOURCES] ENV must be a table (#2)")
@@ -17,6 +18,14 @@ function LIBRARY:LoadInEnv(sFileSource, tSandEnv, sAccessPoint, tFileArgs, bLoad
 
 	if bIsDir then
 		sFileSource = sFileSource:sub(-1) ~= "/" and sFileSource .. "/" or sFileSource
+
+		if not lovr.filesystem.isFile(sFileSource .. "init.lua") then
+			sFileSource = sFileSource .. (SERVER and "server/" or "client/")
+
+			MsgC(Color(241, 196, 15), "[WARNING][ENV-RESSOURCES] maint 'init.lua' not found, switch to : " .. sFileSource)
+
+			return self:LoadInEnv(sFileSource .. "init.lua", tSandEnv, sAccessPoint, tFileArgs, bLoadSubFolders, tCapabilities)
+		end
 
 		if bLoadSubFolders then
 			local sClient = sFileSource .. "client/cl_init.lua"
@@ -41,9 +50,9 @@ function LIBRARY:LoadInEnv(sFileSource, tSandEnv, sAccessPoint, tFileArgs, bLoad
 	tEnv[sAccessPoint].__PATH			= sFileSource:match("^(.*[/\\])[^/\\]+%.lua$") or nil
 	tEnv[sAccessPoint].__NAME			= sFileSource:match("([^/\\]+)%.lua$") or "compiled-chunk"
 
-	local tLib							= tEnv[sAccessPoint].__LIBRARIES
-	if istable(tLib) and isstring(tLib.__PATH) and isfunction(tLib.__Load) then
-		tLib.__BUFFER = tLib.__Load((tEnv[sAccessPoint].__PATH or "") .. tLib.__PATH)
+	local tLib							= tEnv[sAccessPoint].LIBRARIES
+	if istable(tLib) and isstring(tLib.PATH) and isfunction(tLib.Load) then
+		tLib:Load((tEnv[sAccessPoint].__PATH or "") .. tLib.PATH)
 	end
 
 	local fChunk						= LoadFileInEnvironment(sFileSource, tEnv)
@@ -58,7 +67,7 @@ function LIBRARY:LoadInEnv(sFileSource, tSandEnv, sAccessPoint, tFileArgs, bLoad
 
 	local tSubEnv = (SERVER and tServerEnv) or (CLIENT and tClientEnv) or {}
 	for sKey, vValue in pairs(tSubEnv) do
-		if sKey ~= "__PATH" and sKey ~= "__NAME" and sKey ~= "__LIBRARIES" then
+		if sKey ~= "__PATH" and sKey ~= "__NAME" and sKey ~= "LIBRARIES" then
 			tEnv[sAccessPoint][sKey] = vValue
 		end
 	end
@@ -151,6 +160,7 @@ end
 
 function LIBRARY:AddCSLuaFile(sPath)
 	-- TODO : Shared file handling
+	return SERVER
 end
 
 function LIBRARY:ResolveCapabilities(tConfig, tCapabilities)
