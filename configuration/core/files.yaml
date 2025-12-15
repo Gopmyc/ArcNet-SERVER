@@ -11,11 +11,11 @@ CONTENT:
       SERVER: true
     CAPABILITIES:     {}
   - KEY:              "networking"
-    PATH:             "srcs/core/networking/init.lua"
+    PATH:             "srcs/core/networking/"
     ARGS:
       - "enet"
     IS_BINARY:        false
-    LOAD_SUBFOLDERS:  false
+    LOAD_SUBFOLDERS:  true
     SIDES:
       CLIENT: true
       SERVER: true
