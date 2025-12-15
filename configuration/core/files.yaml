@@ -9,6 +9,7 @@ CONTENT:
     SIDES:
       CLIENT: true
       SERVER: true
+    CAPABILITIES:     {}
   - KEY:              "networking"
     PATH:             "srcs/core/networking/init.lua"
     ARGS:
@@ -18,3 +19,5 @@ CONTENT:
     SIDES:
       CLIENT: true
       SERVER: true
+    CAPABILITIES:
+      - "SERVER"
