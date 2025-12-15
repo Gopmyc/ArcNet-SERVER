@@ -110,7 +110,7 @@ function LOADER:LoadSubLoader(sPath, Content, bShared, sID)
 				local _			= {}
 				_.__index		= _
 
-				_.__LIBRARIES	= self:GetLibrariesBase("libraries", _)
+				_.LIBRARIES		= self:GetLibrariesBase("libraries", _)
 
 				function _:GetLoader()
 					return rawget(self, "__PARENT")
@@ -171,7 +171,7 @@ function LOADER:GetLibrariesBase(sBasePath, tParent)
 	tLibraries.PATH		= isstring(sBasePath) and sBasePath or "libraries"
 	tLibraries.BUFFER	= {}
 
-	tLibraries.Load	= function(tLibraries, sPath)
+	tLibraries.Load	= function(tLibSelf, sPath)
 		assert(isstring(sPath), "[LIBRARY {LOADER}] Path must be a string")
 
 		local tBoth		= {
@@ -188,15 +188,17 @@ function LOADER:GetLibrariesBase(sBasePath, tParent)
 		tBoth["shared"]	= tBoth["sh_"]
 		tBoth["server"]	= tBoth["sv_"]
 		tBoth["client"]	= tBoth["cl_"]
+
+		if not lovr.filesystem.isDirectory(sPath) then return end
 		
-		for iID, sFile in ipairs(self:GetLuaFiles(sPath)) do
+		for iID, sFile in ipairs(self:GetLibrary("FINDER"):GetLuaFiles(sPath)) do
 			local sFileName															= sFile:match("([^/\\]+)%.lua$")
 			local sLibFolder														= sFile:match("libraries/([^/\\]+)")
 			local sPrefix															= sFileName:sub(1, 3)
 			local fSide																= tBoth[sLibFolder] or tBoth[sPrefix] or tBoth["sh_"]
 
 			if not fSide(sFile) then goto continue end
-			tLibraries.BUFFER[string.upper(sFile:match("libraries/(.-)%.lua$"))]	= self:GetLibrary("RESSOURCES"):LoadInEnv(sFile, { LIBRARY = {} }, "LIBRARY", {}, false)
+			tLibSelf.BUFFER[string.upper(sFile:match("libraries/(.-)%.lua$"))]	= self:GetLibrary("RESSOURCES"):LoadInEnv(sFile, { LIBRARY = {} }, "LIBRARY", {}, false)
 
 			::continue::
 		end
@@ -218,11 +220,11 @@ end
 
 function LOADER:PrintLibraries()
 	if not istable(self.LIBRARIES) then
-		return MsgC(self:GetConfig().DEBUG.COLORS.ERROR, "[LIBRARY] 'LIBRARIES' table not initialized.")
+		return MsgC(Color(231, 76, 60), "[LIBRARY] 'LIBRARIES' table not initialized.")
 	end
 
 	if not istable(self.LIBRARIES.BUFFER) or not next(self.LIBRARIES.BUFFER) then
-		return MsgC(self:GetConfig().DEBUG.COLORS.ERROR, "[LIBRARY] No libraries loaded.")
+		return MsgC(Color(231, 76, 60), "[LIBRARY] No libraries loaded.")
 	end
 		
 	for sID, _ in pairs(self.LIBRARIES.BUFFER) do
