@@ -1,80 +1,5 @@
 LIBRARY.RESSOURCES	= {}
 
--- TODO : Cut the method into smaller function and improve to overload .../client/libraries/ or .../server/libraries/ in .../libraries/ and give acces to sub part (client/ or server/) at .../libraries/
-function LIBRARY:LoadInEnv(sFileSource, tSandEnv, sAccessPoint, tFileArgs, bLoadSubFolders, tCapabilities)
-	assert(isstring(sFileSource),					"[ENV-RESSOURCES] FileSource must be a string (#1)")
-	assert(istable(tSandEnv),						"[ENV-RESSOURCES] ENV must be a table (#2)")
-	assert(isstring(sAccessPoint),					"[ENV-RESSOURCES] AccessPoint must be a string (#3)")
-	assert(tFileArgs == nil or istable(tFileArgs),	"[ENV-RESSOURCES] FileArg must be a table or nil (#4)")
-
-	local tServerEnv, tClientEnv
-
-	local bIsFile = lovr.filesystem.isFile(sFileSource)
-	local bIsDir = lovr.filesystem.isDirectory(sFileSource)
-
-	if not (bIsFile or bIsDir) then
-		return MsgC(Color(241, 196, 15), "[WARNING][ENV-RESSOURCES] File or folder not found: " .. sFileSource)
-	end
-
-	if bIsDir then
-		sFileSource = sFileSource:sub(-1) ~= "/" and sFileSource .. "/" or sFileSource
-
-		if not lovr.filesystem.isFile(sFileSource .. "init.lua") then
-			sFileSource = sFileSource .. (SERVER and "server/" or "client/")
-
-			MsgC(Color(241, 196, 15), "[WARNING][ENV-RESSOURCES] maint 'init.lua' not found, switch to : " .. sFileSource)
-
-			return self:LoadInEnv(sFileSource .. "init.lua", tSandEnv, sAccessPoint, tFileArgs, bLoadSubFolders, tCapabilities)
-		end
-
-		if bLoadSubFolders then
-			local sClient = sFileSource .. "client/cl_init.lua"
-			local sServer = sFileSource .. "server/sv_init.lua"
-
-			tServerEnv = SERVER and lovr.filesystem.isFile(sServer)
-				and self:LoadInEnv(sServer, tSandEnv, sAccessPoint, tFileArgs)
-				or nil
-
-			tClientEnv = CLIENT and lovr.filesystem.isFile(sClient)
-				and self:LoadInEnv(sClient, tSandEnv, sAccessPoint, tFileArgs)
-				or nil
-		end
-
-		sFileSource = sFileSource .. "init.lua"
-	end
-
-	local tEnv							= setmetatable(table.Copy(tSandEnv, true), { __index = _G })
-
-	tEnv[sAccessPoint].GetConfig		= function() return tCapabilities end
-	tEnv[sAccessPoint].GetDependence	= function(_, sKey) return tFileArgs and tFileArgs[sKey] end
-	tEnv[sAccessPoint].__PATH			= sFileSource:match("^(.*[/\\])[^/\\]+%.lua$") or nil
-	tEnv[sAccessPoint].__NAME			= sFileSource:match("([^/\\]+)%.lua$") or "compiled-chunk"
-
-	local tLib							= tEnv[sAccessPoint].LIBRARIES
-	if istable(tLib) and isstring(tLib.PATH) and isfunction(tLib.Load) then
-		tLib:Load((tEnv[sAccessPoint].__PATH or "") .. tLib.PATH)
-	end
-
-	local fChunk						= LoadFileInEnvironment(sFileSource, tEnv)
-	if not fChunk then return nil end
-
-	local bOk, sRunErr					= pcall(fChunk)
-	if not bOk then
-		MsgC(Color(255, 0, 0), "[ENV-RESSOURCES] Runtime error: " .. tostring(sRunErr))
-	end
-
-	assert(istable(tEnv[sAccessPoint]), "[ENV-RESSOURCES] Access point '" .. sAccessPoint .. "' is not a table or unreachable")
-
-	local tSubEnv = (SERVER and tServerEnv) or (CLIENT and tClientEnv) or {}
-	for sKey, vValue in pairs(tSubEnv) do
-		if sKey ~= "__PATH" and sKey ~= "__NAME" and sKey ~= "LIBRARIES" then
-			tEnv[sAccessPoint][sKey] = vValue
-		end
-	end
-
-	return tEnv[sAccessPoint]
-end
-
 function LIBRARY:ResolveDependencies(tDependencies, tSides, tSubLoader)
 	assert(istable(tDependencies),	"[RESSOURCES] The 'ResolveDependencies' method requires a table of dependencies")
 	assert(istable(tSides),			"[RESSOURCES] The 'tSides' argument must be a table with 'client' and 'server' keys")
@@ -140,7 +65,7 @@ function LIBRARY:IncludeFiles(FileSource, tSide, tFileArgs, tSandEnv, bIsBinary,
 			)
 			or bIsEnvLoad and
 			(
-				self:LoadInEnv(FileSource, tSandEnv.CONTENT, tSandEnv.ACCESS_POINT, tFileArgs, bLoadSubFolders, tCapabilities)
+				self:LoadInEnv(FileSource, tSandEnv.CONTENT, tSandEnv.ACCESS_POINT, tFileArgs, bLoadSubFolders, tCapabilities) -- FIX
 			)
 			or isfunction(FileSource) and
 			(
