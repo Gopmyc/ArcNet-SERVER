@@ -13,6 +13,7 @@ LOAD_PRIORITY:
 LIBRARIES:
   RESSOURCES:   "srcs/core/loader/libraries/ressources.lua"
   FINDER:       "srcs/core/loader/libraries/finder.lua"
+  ENVIRONEMENT:
 
 RULES_FILES:
   1:
@@ -42,3 +43,55 @@ RULES_FILES:
   9:
     FIELD:  SIDES.SERVER
     TYPE:   bool
+
+SAFE_GLOBALS:
+  constants:
+    SERVER:   true
+    CLIENT:   true
+    _VERSION: false
+
+  functions:
+    assert:     true
+    error:      true
+    ipairs:     true
+    next:       true
+    pairs:      true
+    pcall:      true
+    select:     true
+    tonumber:   true
+    tostring:   true
+    type:       true
+    unpack:     true
+    xpcall:     true
+
+  libraries:
+    math:       full
+    string:     full
+    table:
+      insert:   true
+      remove:   true
+      sort:     true
+      concat:   true
+
+  namespaces:
+    ENV:
+      exposed:  true
+      readonly: false
+
+  execution:
+    load:       false
+    loadstring: false
+    dofile:     false
+    loadfile:   false
+    setfenv:    false
+    getfenv:    false
+
+  metatable:
+    getmetatable:      false
+    setmetatable:      false
+    allow_string_meta: false
+    allow_table_meta:  false
+
+  fallback:
+    global:           false
+    error_on_missing: true
