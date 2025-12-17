@@ -61,11 +61,18 @@ function LIBRARY:IncludeFiles(FileSource, tSide, tFileArgs, tSandEnv, bIsBinary,
 		(
 			bIsBinary and
 			(
-				self:IncludeBinaryFile(FileSource)
+				self:LoadBinaryFile(FileSource)
 			)
 			or bIsEnvLoad and
 			(
-				self:LoadInEnv(FileSource, tSandEnv.CONTENT, tSandEnv.ACCESS_POINT, tFileArgs, bLoadSubFolders, tCapabilities) -- FIX
+				self:GetLibrary("EN_LOADER"):Load(
+					FileSource,
+					tSandEnv.CONTENT,
+					tSandEnv.ACCESS_POINT,
+					tFileArgs,
+					bLoadSubFolders,
+					tCapabilities
+				)
 			)
 			or isfunction(FileSource) and
 			(
@@ -79,7 +86,7 @@ function LIBRARY:IncludeFiles(FileSource, tSide, tFileArgs, tSandEnv, bIsBinary,
 		nil
 end
 
-function LIBRARY:IncludeBinaryFile(sFilePath) -- <-- Useful for a decoupled logic
+function LIBRARY:LoadBinaryFile(sFilePath) -- <-- Useful for a decoupled logic
 	return require(sFilePath)
 end
 
