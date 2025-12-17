@@ -11,9 +11,10 @@ LOAD_PRIORITY:
 #  - "MODULES"
 
 LIBRARIES:
+  ENV_BUILDER:  "srcs/core/loader/libraries/env/builder.lua"
+  ENV_LOADER:   "srcs/core/loader/libraries/env/loader.lua"
   RESSOURCES:   "srcs/core/loader/libraries/ressources.lua"
   FINDER:       "srcs/core/loader/libraries/finder.lua"
-  ENVIRONEMENT:
 
 RULES_FILES:
   1:
@@ -44,7 +45,7 @@ RULES_FILES:
     FIELD:  SIDES.SERVER
     TYPE:   bool
 
-SAFE_GLOBALS:
+SAFE_GLOBAL:
   constants:
     SERVER:   true
     CLIENT:   true
