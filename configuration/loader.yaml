@@ -46,11 +46,16 @@ RULES_FILES:
     TYPE:   bool
 
 SAFE_GLOBAL:
+  # ┌───────────┐
+  # │ CONSTANTS │
+  # └───────────┘
   constants:
     SERVER:   true
     CLIENT:   true
     _VERSION: false
-
+  # ┌───────────┐
+  # │ FUNCTIONS │
+  # └───────────┘
   functions:
     assert:     true
     error:      true
@@ -64,7 +69,20 @@ SAFE_GLOBAL:
     type:       true
     unpack:     true
     xpcall:     true
-
+    istable:    true
+    isnumber:   true
+    isstring:   true
+    isbool:     true
+    isfunction: true
+    isthread:   true
+    isuserdata: true
+    Color:      true
+    MsgC:       true
+    PrintTable: true
+    print:      true
+  # ┌───────────┐
+  # │ LIBRARIES │
+  # └───────────┘
   libraries:
     math:       full
     string:     full
@@ -73,12 +91,17 @@ SAFE_GLOBAL:
       remove:   true
       sort:     true
       concat:   true
-
+      copy:     true
+  # ┌─────────────┐
+  # │ NAME-SPACES │
+  # └─────────────┘
   namespaces:
     ENV:
       exposed:  true
       readonly: false
-
+  # ┌───────────┐
+  # │ EXECUTION │
+  # └───────────┘
   execution:
     load:       false
     loadstring: false
@@ -86,13 +109,17 @@ SAFE_GLOBAL:
     loadfile:   false
     setfenv:    false
     getfenv:    false
-
+  # ┌────────────┐
+  # │ META-TABLE │
+  # └────────────┘
   metatable:
     getmetatable:      false
     setmetatable:      false
     allow_string_meta: false
     allow_table_meta:  false
-
+  # ┌──────────┐
+  # │ FALLBACK │
+  # └──────────┘
   fallback:
     global:           false
     error_on_missing: true
