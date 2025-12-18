@@ -2,6 +2,8 @@ function LIBRARY:ApplyConstants(tEnv, tPolicy)
 	for sKey, vValue in pairs(tPolicy.constants or {}) do
 		tEnv[sKey] = vValue
 	end
+
+	return tEnv
 end
 
 function LIBRARY:ApplyFunctions(tEnv, tPolicy)
@@ -10,8 +12,9 @@ function LIBRARY:ApplyFunctions(tEnv, tPolicy)
 			tEnv[sKey] = _G[sKey]
 		end
 	end
-end
 
+	return tEnv
+end
 
 function LIBRARY:ApplyLibraries(tEnv, tPolicy)
 	for sLib, vScope in pairs(tPolicy.libraries or {}) do
@@ -27,6 +30,8 @@ function LIBRARY:ApplyLibraries(tEnv, tPolicy)
 			tEnv[sLib] = tLib
 		end
 	end
+
+	return tEnv
 end
 
 function LIBRARY:ApplyNamespaces(tEnv, tPolicy)
@@ -35,6 +40,8 @@ function LIBRARY:ApplyNamespaces(tEnv, tPolicy)
 			tEnv[sName]	= tEnv[sName] or {}
 		end
 	end
+
+	return tEnv
 end
 
 function LIBRARY:ApplyFallback(tEnv, tPolicy)
@@ -49,7 +56,7 @@ function LIBRARY:ApplyFallback(tEnv, tPolicy)
 	if not tFallback.global then
 		tMt.__index = function(_, sKey)
 			if tFallback.error_on_missing then
-				error("Access denied: " .. tostring(sKey), 2)
+				MsgC(Color(241, 196, 15), "[WARNING] Access denied: " .. tostring(sKey), 2)
 			end
 			return nil
 		end
@@ -58,6 +65,8 @@ function LIBRARY:ApplyFallback(tEnv, tPolicy)
 	end
 
 	setmetatable(tEnv, tMt)
+
+	return tEnv
 end
 
 function LIBRARY:InitAccessPoint(tEnv, sAccessPoint, sFileSource, tFileArgs, tCapabilities)
@@ -73,16 +82,27 @@ function LIBRARY:InitAccessPoint(tEnv, sAccessPoint, sFileSource, tFileArgs, tCa
 
 	tEnv[sAccessPoint].__PATH			= sFileSource:match("^(.*[/\\])[^/\\]+%.lua$") or nil
 	tEnv[sAccessPoint].__NAME			= sFileSource:match("([^/\\]+)%.lua$") or "compiled-chunk"
+
+	return tEnv
 end
 
-function LIBRARY:LoadInternalLibraries(tEnv, sAccessPoint)
-	local tLib = tEnv[sAccessPoint].LIBRARIES
-	if istable(tLib) and isstring(tLib.PATH) and isfunction(tLib.Load) then
-		tLib:Load((tEnv[sAccessPoint].__PATH or "") .. tLib.PATH)
+function LIBRARY:LoadInternalLibraries(tEnv, sAccessPoint, sPath)
+	local tLib		= tEnv[sAccessPoint].LIBRARIES
+	if not (istable(tLib) and isstring(tLib.PATH) and isfunction(tLib.Load)) then
+		MsgC(Color(241, 196, 15), "[WARNING][ENV-RESSOURCES] Cannot load internal libraries: invalid LIBRARIES access point")
+		return tEnv
 	end
+
+	local sBasePath	= sPath or tEnv[sAccessPoint].__PATH or ""
+	sBasePath		= (sBasePath:find("/server/$") or sBasePath:find("/client/$")) and sBasePath:match("^(.*[/\\])[^/\\]+[/\\]$") or sBasePath
+
+	tLib:Load(sBasePath .. tLib.PATH)
+
+	return tEnv
 end
 
-function LIBRARY:BuildEnvironment(sFileSource, tSandEnv, sAccessPoint, tFileArgs, tCapabilities)
+
+function LIBRARY:BuildEnvironment(sFileSource, tSandEnv, sAccessPoint, tFileArgs, tCapabilities, bLoadLibraries)
 	local tEnv		= table.Copy(tSandEnv, true)
 	local tPolicy	= self.SAFE_GLOBAL
 
@@ -96,7 +116,7 @@ function LIBRARY:BuildEnvironment(sFileSource, tSandEnv, sAccessPoint, tFileArgs
 	self:ApplyNamespaces(tEnv, tPolicy)
 	self:ApplyFallback(tEnv, tPolicy)
 	self:InitAccessPoint(tEnv, sAccessPoint, sFileSource, tFileArgs, tCapabilities)
-	self:LoadInternalLibraries(tEnv, sAccessPoint)
+	if bLoadLibraries then self:LoadInternalLibraries(tEnv, sAccessPoint) end
 
 	return tEnv
 end
