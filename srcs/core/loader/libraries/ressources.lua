@@ -65,7 +65,7 @@ function LIBRARY:IncludeFiles(FileSource, tSide, tFileArgs, tSandEnv, bIsBinary,
 			)
 			or bIsEnvLoad and
 			(
-				self:GetLibrary("EN_LOADER"):Load(
+				self:GetLibrary("ENV_LOADER"):Load(
 					FileSource,
 					tSandEnv.CONTENT,
 					tSandEnv.ACCESS_POINT,
@@ -96,46 +96,49 @@ function LIBRARY:AddCSLuaFile(sPath)
 end
 
 function LIBRARY:ResolveCapabilities(tConfig, tCapabilities)
-	assert(istable(tConfig),		"tConfig must be a table")
-	assert(istable(tCapabilities),	"tCapabilities must be a table")
+	assert(istable(tConfig),				"Config must be a table")
+	assert(istable(tCapabilities),			"Capabilities must be a table")
+	assert(istable(tCapabilities.SHARED),	"Capabilities.SHARED must be a table")
+	assert(istable(tCapabilities.SERVER),	"Capabilities.SERVER must be a table")
+	assert(istable(tCapabilities.CLIENT),	"Capabilities.CLIENT must be a table")
 
-	local tConfigBuffer	= {}
+	local tConfigBuffer = {}
 
-	for _, sCapability in ipairs(tCapabilities) do
-		local tSource	= tConfig
-		local tTarget	= tConfigBuffer
-		local sLastKey	= nil
+	local tLoad = {
+		SERVER	= SERVER and tCapabilities.SERVER or nil,
+		CLIENT	= CLIENT and tCapabilities.CLIENT or nil,
+		SHARED	= tCapabilities.SHARED,
+	}
 
-		for sKey in string.gmatch(sCapability, "[^%.]+") do
-			local sUpperKey	= sKey:upper()
-			if sKey ~= sUpperKey then
-				MsgC(
-					Color(255, 180, 0),
-					"[CONFIG WARNING] key '" .. sKey .. "' is not uppercase, normalized to '" .. sUpperKey
-				)
+	for _, tSourceSet in pairs(tLoad) do
+		for _, sCapability in ipairs(tSourceSet) do
+			local tSource, tTarget	= tConfig, tConfigBuffer
+			local sLastKey
+
+			for sKey in string.gmatch(sCapability, "[^%.]+") do
+				local sUpperKey 	= sKey:upper()
+				if sKey ~= sUpperKey then
+					MsgC(Color(255, 180, 0), "[CONFIG WARNING] key '" .. sKey .. "' is not uppercase, normalized to '" .. sUpperKey .. "'")
+				end
+
+				if sLastKey then
+					tTarget[sLastKey]	= tTarget[sLastKey] or {}
+					tTarget				= tTarget[sLastKey]
+					tSource				= tSource and tSource[sLastKey] or nil
+				end
+
+				sLastKey		= sUpperKey
 			end
 
-			if sLastKey then
-				tTarget[sLastKey]	= tTarget[sLastKey] or {}
-				tTarget				= tTarget[sLastKey]
-				tSource				= tSource and tSource[sLastKey] or nil
+			if sLastKey and tSource then
+				tTarget[sLastKey]	= tSource[sLastKey]
 			end
-
-			sLastKey	= sUpperKey
-		end
-
-		if sLastKey and tSource then
-			tTarget[sLastKey]	= tSource[sLastKey]
 		end
 	end
 
-	return setmetatable({},
-		{
-			__index		= tConfigBuffer,
-			__metatable	= false,
-			__newindex	= function()
-				error("Configuration table is read-only", 2)
-			end,
-		}
-	)
+	return setmetatable({}, {
+		__index			= tConfigBuffer,
+		__metatable		= false,
+		__newindex		= function() error("Configuration table is read-only", 2) end,
+	})
 end
