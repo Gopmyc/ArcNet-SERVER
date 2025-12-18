@@ -13,3 +13,5 @@ MAX_CHANNELS:   1
 # Network Bandwidth Limits (in bytes per second) (0 for unlimited)
 IN_BANDWIDTH:   0
 OUT_BANDWIDTH:  0
+
+MESS_TIMEOUT:   200
