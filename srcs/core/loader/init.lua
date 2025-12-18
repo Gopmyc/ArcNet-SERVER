@@ -58,9 +58,9 @@ end
 function LOADER:InitializeSubloaders(tLoader, tConfig)
 	tLoader.SUBLOADER_BASE	= require(tLoader.SUBLOADERS_PATH):Initialize(tConfig, tLoader.SUBLOADERS_PATH, tLoader)
 
-	if istable(tLoader.CONFIG.DEBUG) and tLoader.CONFIG.DEBUG.ENABLED then
-		tLoader.LOAD_PRIORITY[#tLoader.LOAD_PRIORITY + 1]	= "HOT_RELOAD"
-	end
+	--if istable(tLoader.CONFIG.DEBUG) and tLoader.CONFIG.DEBUG.ENABLED then
+	--	tLoader.LOAD_PRIORITY[#tLoader.LOAD_PRIORITY + 1]	= "HOT_RELOAD"
+	--end
 
 	for _, sGroup in ipairs(tLoader.LOAD_PRIORITY) do
 		local tSubLoader, tInitialized = tLoader.SUBLOADER_BASE:InitializeGroup(sGroup)
