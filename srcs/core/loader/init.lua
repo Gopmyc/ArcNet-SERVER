@@ -32,14 +32,14 @@ function LOADER:CreateLoaderInstance(tConfig)
 	for sName, sPath in pairs(tLoader.LIBRARIES or {}) do
 		if sName == "BUFFER" then goto continue end
 
-		local tEnv		= setmetatable({ LIBRARY = {
+		local tEnv			= setmetatable({ LIBRARY = {
 			GetLibrary	= function(self, sLibName)
 				return tLoader.LIBRARIES.BUFFER and tLoader.LIBRARIES.BUFFER[sLibName]
 			end,
 		} }, { __index = _G })
-		local fChunk	= LoadFileInEnvironment(sPath, tEnv)
+		local fChunk		= LoadFileInEnvironment(tLoader.LIBRARIES_PATH .. sPath, tEnv)
 
-		local bOk, sRunErr = pcall(fChunk)
+		local bOk, sRunErr	= pcall(fChunk)
 		if not bOk then
 			MsgC(tLoader.CONFIG.DEBUG.COLORS.ERROR, "[ENV-LOADER] Runtime error: " .. tostring(sRunErr))
 		end
@@ -78,9 +78,9 @@ function LOADER:LoadConfiguration(sPath, tLibraries, tTable)
 	tTable				= istable(tTable) and tTable or {}
 	for _, sFile in ipairs(tFiles) do
 		if sFile:sub(-5) == ".yaml" then
-			local sData = lovr.filesystem.read(sPath .. "/" .. sFile)
-			local tParsed = sData and tLibraries.YAML.eval(sData) or nil
-			tTable[string.upper(sFile:sub(1, -6))] = istable(tParsed) and tParsed or nil
+			local sData								= lovr.filesystem.read(sPath .. "/" .. sFile)
+			local tParsed							= sData and tLibraries.YAML.eval(sData) or nil
+			tTable[string.upper(sFile:sub(1, -6))]	= istable(tParsed) and tParsed or nil
 		end
 	end
 
@@ -98,9 +98,9 @@ function LOADER:GetSubLoaderBase()
 end
 
 function LOADER:LoadSubLoader(sPath, Content, bShared, sID)
-	assert(isstring(sPath), "[SUB-LOADER] Path must be a string")
-	assert(Content ~= nil, "[SUB-LOADER] Content must be a table")
-	assert(isbool(bShared), "[SUB-LOADER] Shared flag must be a boolean")
+	assert(isstring(sPath),	"[SUB-LOADER] Path must be a string")
+	assert(Content ~= nil,	"[SUB-LOADER] Content must be a table")
+	assert(isbool(bShared),	"[SUB-LOADER] Shared flag must be a boolean")
 
 	if bShared and SERVER then
 		self:GetLibrary("RESSOURCES"):AddCSLuaFile(sPath)
@@ -169,8 +169,6 @@ function LOADER:GetConfig()
 end
 
 function LOADER:GetLibrariesBase(sBasePath, tParent)
-	local function scan(p,t)t=t or{}for _,f in ipairs(FilesFind(p.."/*"))do t[#t+1]=p.."/"..f end for _,d in ipairs(select(2,FilesFind(p.."/*")))do scan(p.."/"..d,t) end return t end
-
 	local tLibraries	= {}
 	tLibraries.PATH		= isstring(sBasePath) and sBasePath or "libraries"
 	tLibraries.BUFFER	= {}
@@ -202,7 +200,7 @@ function LOADER:GetLibrariesBase(sBasePath, tParent)
 			local fSide																= tBoth[sLibFolder] or tBoth[sPrefix] or tBoth["sh_"]
 
 			if not fSide(sFile) then goto continue end
-			tLibSelf.BUFFER[string.upper(sFile:match("libraries/(.-)%.lua$"))]	= self:GetLibrary("ENV_LOADER"):Load(sFile, { LIBRARY = {} }, "LIBRARY", {}, false)
+			tLibSelf.BUFFER[string.upper(sFile:match("libraries/(.-)%.lua$"))]		= self:GetLibrary("ENV_LOADER"):Load(sFile, { LIBRARY = {} }, "LIBRARY", {}, false)
 
 			::continue::
 		end
