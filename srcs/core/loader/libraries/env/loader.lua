@@ -26,28 +26,33 @@ function LIBRARY:ResolveFileSource(sFileSource, bIsSubFile)
 	return self:ResolveFileSource(sFallback .. "init.lua", true)
 end
 
-function LIBRARY:LoadSubEnvironments(sBasePath, tSandEnv, sAccessPoint, tFileArgs, tCapabilities)
+function LIBRARY:LoadSubEnvironments(sBasePath, tBaseEnv, sAccessPoint, tFileArgs, tCapabilities, tNotLoadLibraries, tLibraries)
+	tNotLoadLibraries	= istable(tNotLoadLibraries) and tNotLoadLibraries or {true, true}
+
+	local fCheckLoadLib	= function(bNotLoadLib)
+		if not (isbool(bNotLoadLib) and bNotLoadLib ~= nil) then return true end
+		return bNotLoadLib
+	end
+
 	local sClient		= sBasePath .. "client/" .. self.ENTRY_POINT.CLIENT
 	local sServer		= sBasePath .. "server/" .. self.ENTRY_POINT.SERVER
 
-	local tSharedEnv	= table.Copy(tSandEnv, true)
-
-	if istable(tSandEnv[sAccessPoint]) and istable(tSandEnv[sAccessPoint].LIBRARIES) then
-		tSharedEnv[sAccessPoint]				= tSharedEnv[sAccessPoint] or {}
-		tSharedEnv[sAccessPoint].LIBRARIES		= tSandEnv[sAccessPoint].LIBRARIES
+	local tSandEnv	= table.Copy(tBaseEnv, true)
+	if istable(tBaseEnv[sAccessPoint]) and istable(tBaseEnv[sAccessPoint].LIBRARIES) then
+		tSandEnv[sAccessPoint].LIBRARIES.BUFFER	= tLibraries or tSandEnv[sAccessPoint].LIBRARIES.BUFFER
 	end
 
 	local tServerEnv	= SERVER and
 		lovr.filesystem.isFile(sServer) and
-		self:Load(sServer, tSharedEnv, sAccessPoint, tFileArgs, false, tCapabilities, true) or
+		self:Load(sServer, tSandEnv, sAccessPoint, tFileArgs, false, tCapabilities, fCheckLoadLib(tNotLoadLibraries[1])) or
 		nil
 
 	local tClientEnv	= CLIENT and
 		lovr.filesystem.isFile(sClient) and
-		self:Load(sClient, tSharedEnv, sAccessPoint, tFileArgs, false, tCapabilities, true) or
+		self:Load(sClient, tSandEnv, sAccessPoint, tFileArgs, false, tCapabilities, fCheckLoadLib(tNotLoadLibraries[2])) or
 		nil
 
-	return tServerEnv, tClientEnv
+	return tServerEnv or tClientEnv or {}
 end
 
 function LIBRARY:ExecuteChunk(sFileSource, tEnv)
@@ -97,16 +102,14 @@ function LIBRARY:Load(sFileSource, tSandEnv, sAccessPoint, tFileArgs, bLoadSubFo
 		return MsgC(Color(241, 196, 15), "[WARNING][ENV-RESSOURCES] Failed to resolve file source: " .. sFileSource)
 	end
 
-	local tServerEnv, tClientEnv;
+	local tSubEnv;
+	local tEnv		= tEnvBuilder:BuildEnvironment(sResolved, tSandEnv, sAccessPoint, tFileArgs, tCapabilities, not bNotLoadLibraries)
 	if bLoadSubFolders and sResolved:sub(-8) == "init.lua" then
 		local sBasePath			= sResolved:match("^(.*[/\\])")
-		tServerEnv, tClientEnv	= self:LoadSubEnvironments(sBasePath, tSandEnv, sAccessPoint, tFileArgs, tCapabilities)
+		tSubEnv					= self:LoadSubEnvironments(sBasePath, tSandEnv, sAccessPoint, tFileArgs, tCapabilities, {true, true}, tEnv[sAccessPoint].LIBRARIES and tEnv[sAccessPoint].LIBRARIES.BUFFER)
 	end
 
-	local tEnv		= tEnvBuilder:BuildEnvironment(sResolved, tSandEnv, sAccessPoint, tFileArgs, tCapabilities, not bNotLoadLibraries)
-	local tSubEnv	= (SERVER and tServerEnv) or (CLIENT and tClientEnv) or {}
 	self:MergeSubEnvironments(tEnv[sAccessPoint], tSubEnv)
-
 	self:ExecuteChunk(sResolved, tEnv)
 
 	return assert(istable(tEnv[sAccessPoint]), "[ENV-RESSOURCES] Access point '" .. sAccessPoint .. "' unreachable") and tEnv[sAccessPoint]
