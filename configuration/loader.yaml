@@ -8,6 +8,7 @@ RESSOURCES:       {}
 LOAD_PRIORITY:
 #  - "CLASSES"
   - "CORE"
+  - "EVENTS"
 #  - "MODULES"
 
 LIBRARIES_PATH: "srcs/core/loader/libraries/"
