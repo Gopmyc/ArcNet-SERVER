@@ -1,5 +1,3 @@
-CORE:PrintLibraries()
-
 function CORE:Initialize()
 	local ENET			= assert(self:GetLibrary("enet"),				"[CORE] 'ENET' library is required to initialize the networking core")
 	local IP			= assert(self:GetConfig().SERVER.IP,			"[CORE] 'IP' is required to initialize the networking core")
@@ -14,7 +12,7 @@ function CORE:Initialize()
 		CLIENTS			= setmetatable({}, {__mode = "kv"}),
 		NETWORK_ID		= setmetatable({}, {__mode = "kv"}),
 		HOOKS			= self:GetLibrary("HOOKS"):Initialize(),
-		-- EVENTS			= {},
+		-- EVENTS			= {}, make a subloader and load all events from a folder, then pass it here 'self:GetLibrary("HOOKS"):Initialize()'
 		MESS_TIMEOUT	= MESS_TIMEOUT,
 		HOST			= ENET.host_create(IP .. ":" .. PORT, MAX_CLIENTS, CHANNELS, IN_BANDWIDTH, OUT_BANDWIDTH),
 	}, {__index = CORE})
