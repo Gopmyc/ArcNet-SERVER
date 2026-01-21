@@ -88,8 +88,10 @@ end
 
 function LIBRARY:LoadInternalLibraries(tEnv, sAccessPoint, sPath)
 	local tLib		= tEnv[sAccessPoint].LIBRARIES
+	local sID		= tEnv[sAccessPoint].__PATH .. tEnv[sAccessPoint].__NAME or "unknown"
+	
 	if not (istable(tLib) and isstring(tLib.PATH) and isfunction(tLib.Load)) then
-		MsgC(Color(241, 196, 15), "[WARNING][ENV-RESSOURCES] Cannot load internal libraries: invalid LIBRARIES access point")
+		MsgC(Color(241, 196, 15), "[WARNING][ENV-RESSOURCES] Cannot load internal libraries for '" .. sID .. "' : invalid LIBRARIES access point")
 		return tEnv
 	end
 
