@@ -200,7 +200,7 @@ function LOADER:GetLibrariesBase(sBasePath, tParent)
 			local fSide																= tBoth[sLibFolder] or tBoth[sPrefix] or tBoth["sh_"]
 
 			if not fSide(sFile) then goto continue end
-			tLibSelf.BUFFER[string.upper(sFile:match("libraries/(.-)%.lua$"))]		= self:GetLibrary("ENV_LOADER"):Load(sFile, { LIBRARY = {} }, "LIBRARY", {}, false)
+			tLibSelf.BUFFER[string.upper(sFile:match("libraries/(.-)%.lua$"))]		= self:GetLibrary("ENV_LOADER"):Load(sFile, { LIBRARY = {} }, "LIBRARY", {}, false, {}, true)
 
 			::continue::
 		end
@@ -221,21 +221,28 @@ function LOADER:GetLibrary(sName)
 end
 
 function LOADER:PrintLibraries()
+	local sID		= self.__PATH .. self.__NAME or "unknown"
+	local tBuffer	= self.LIBRARIES.BUFFER
 	if not istable(self.LIBRARIES) then
 		return MsgC(Color(231, 76, 60), "[LIBRARY] 'LIBRARIES' table not initialized.")
 	end
 
-	if not istable(self.LIBRARIES.BUFFER) or not next(self.LIBRARIES.BUFFER) then
-		return MsgC(Color(231, 76, 60), "[LIBRARY] No libraries loaded.")
+	if not istable(tBuffer) or not next(tBuffer) then
+		return MsgC(Color(231, 76, 60), "[LIBRARY] No libraries loaded for : '" .. sID .."'")
 	end
 		
-	for sID, _ in pairs(self.LIBRARIES.BUFFER) do
+	MsgC(Color(52, 152, 219), "==============================")
+	MsgC(Color(52, 152, 219), "[LIBRARY] Loaded libraries for: ", Color(236, 240, 241), sID)
+	MsgC(Color(52, 152, 219), "------------------------------")
+
+	for sLibName in pairs(tBuffer) do
 		MsgC(
-			Color(52, 152, 219), "[LIBRARY] ",
-			Color(46, 204, 113), "Loaded: ",
-			Color(236, 240, 241), sID
+			Color(46, 204, 113), "✔  ",
+			Color(236, 240, 241), sLibName
 		)
 	end
+
+	MsgC(Color(52, 152, 219), "==============================")
 end
 
 return LOADER
