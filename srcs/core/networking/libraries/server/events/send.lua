@@ -5,7 +5,7 @@ function LIBRARY:Call(tServer, tEvent)
 	local sFlag			=	tData.flag
 
 	if not tPeer then
-		return MsgC(Color(231, 76, 60), "Attempted to send message to unregister Client [ID : " .. sID .. "]  : " . .tostring(tPeer))
+		return MsgC(Color(231, 76, 60), "Attempted to send message to unregister Client [ID : " .. sID .. "]  : " .. tostring(tPeer))
 	end
 
 	if not istable(tData) then
