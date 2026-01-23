@@ -4,6 +4,7 @@ function LIBRARY:Initialize(tEvents)
 	if not next(tEvents) then
 		MsgC(Color(241, 196, 15), "[WARNING] No events provided to initialize EVENTS library")
 	end
+	
 	return setmetatable(
 		{
 			__EVENTS = setmetatable(
