@@ -19,8 +19,18 @@ LIBRARIES:
   RUNTIME:      "runtime.lua"
 
 RUNTIME:
-  UPDATE: [ BOOTSTRAP, INGRESS, PROCESS, RESOLVE, EGRESS, OBSERVE ]
-  DRAW:   [ PREPARE, EMIT, OVERLAY, INSPECT ]
+  UPDATE:
+    BOOTSTRAP:  1
+    INGRESS:    2
+    PROCESS:    3
+    RESOLVE:    4
+    EGRESS:     5
+    OBSERVE:    6
+  DRAW:
+    PREPARE:    1
+    EMIT:       2
+    OVERLAY:    3
+    INSPECT:    4
 
 RULES_FILES:
   1:
