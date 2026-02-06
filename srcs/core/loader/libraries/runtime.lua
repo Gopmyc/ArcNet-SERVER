@@ -41,13 +41,16 @@ function LIBRARY:RegisterInstance(tInstance)
 	assert(istable(tInstance),	"Instance must be a table")
 	assert(self.RUNTIME_CONFIG,	"Runtime configuration not set")
 
-	if isstring(tInstance.STAGE_UPDATE) then
+	if istable(tInstance.STAGE_UPDATE) then
+		assert(isstring(tInstance.STAGE_UPDATE.STAGE),	"STAGE_UPDATE.STAGE must be a string")
+		assert(isnumber(tInstance.STAGE_UPDATE.ORDER),	"STAGE_UPDATE.ORDER must be a number or nil")
+
 		local tStages	= self.RUNTIME_CONFIG.UPDATE
-		local nStage	= tStages[tInstance.STAGE_UPDATE]
+		local nStage	= tStages[tInstance.STAGE_UPDATE.STAGE]
 
-		assert(isnumber(nStage), "Invalid UPDATE stage '" .. tInstance.STAGE_UPDATE .. "'")
+		assert(isnumber(nStage), "Invalid UPDATE stage '" .. tInstance.STAGE_UPDATE.STAGE .. "'")
 
-		local nOrder	= isnumber(tInstance.ORDER_UPDATE) and tInstance.ORDER_UPDATE or 0
+		local nOrder	= isnumber(tInstance.STAGE_UPDATE.ORDER) and tInstance.STAGE_UPDATE.ORDER or 0
 		local nPriority	= nStage * 1000 + nOrder
 
 		self.UPDATE_PIPELINE[#self.UPDATE_PIPELINE + 1] = {
@@ -57,13 +60,16 @@ function LIBRARY:RegisterInstance(tInstance)
 		}
 	end
 
-	if isstring(tInstance.STAGE_DRAW) then
+	if istable(tInstance.STAGE_DRAW) then
+		assert(isstring(tInstance.STAGE_DRAW.STAGE),	"STAGE_DRAW.STAGE must be a string")
+		assert(isnumber(tInstance.STAGE_DRAW.ORDER),	"STAGE_DRAW.ORDER must be a number or nil")
+
 		local tStages	= self.RUNTIME_CONFIG.DRAW
-		local nStage	= tStages[tInstance.STAGE_DRAW]
+		local nStage	= tStages[tInstance.STAGE_DRAW.STAGE]
 
-		assert(isnumber(nStage), "Invalid DRAW stage '" .. tInstance.STAGE_DRAW .. "'")
+		assert(isnumber(nStage), "Invalid DRAW stage '" .. tInstance.STAGE_DRAW.STAGE .. "'")
 
-		local nOrder	= isnumber(tInstance.ORDER_DRAW) and tInstance.ORDER_DRAW or 0
+		local nOrder	= isnumber(tInstance.STAGE_DRAW.ORDER) and tInstance.STAGE_DRAW.ORDER or 0
 		local nPriority	= nStage * 1000 + nOrder
 
 		self.DRAW_PIPELINE[#self.DRAW_PIPELINE + 1] = {
