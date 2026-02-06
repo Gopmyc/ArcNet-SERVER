@@ -15,7 +15,7 @@ function LIBRARY:AddHook(sID, fCallBack)
 
 	return #self._HOOKS[sID]
 end
-	
+
 function LIBRARY:CallHook(sID, tData)
 	assert(isstring(sID),	"[ERROR] 'CallHook' : hook ID must be a string")
 	assert(istable(tData),	"[ERROR] 'CallHook' : hook Data must be a table")
