@@ -16,6 +16,7 @@ LIBRARIES:
   ENV_LOADER:   "env/loader.lua"
   RESSOURCES:   "ressources.lua"
   FINDER:       "finder.lua"
+  RUNTIME:      "runtime.lua"
 
 RULES_FILES:
   1:
@@ -45,6 +46,10 @@ RULES_FILES:
   9:
     FIELD:  SIDES.SERVER
     TYPE:   bool
+
+RUNTIME:
+  UPDATE: [ BOOTSTRAP, INGRESS, PROCESS, RESOLVE, EGRESS, OBSERVE ]
+  DRAW:   [ PREPARE, EMIT, OVERLAY, INSPECT ]
 
 SAFE_GLOBAL:
   # ┌───────────┐
