@@ -51,6 +51,7 @@ function LOADER:CreateLoaderInstance(tConfig)
 	end
 
 	tLoader:GetLibrary("ENV_BUILDER"):SetEnvSpecification(tLoader.SAFE_GLOBAL)
+	tLoader:GetLibrary("RUNTIME"):SetRuntimeConfig(tLoader.RUNTIME)
 
 	return tLoader
 end
