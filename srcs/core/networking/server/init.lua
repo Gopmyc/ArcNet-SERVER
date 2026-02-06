@@ -8,7 +8,7 @@ function CORE:Initialize()
 	local OUT_BANDWIDTH	= assert(self:GetConfig().SERVER.OUT_BANDWIDTH,	"[CORE] 'OUT_BANDWIDTH' is required to initialize the networking core")
 	local MESS_TIMEOUT	= assert(self:GetConfig().SERVER.MESS_TIMEOUT,	"[CORE] 'MESS_TIMEOUT' is required to initialize the networking core")
 
-	return setmetatable({
+	local tNetwork	= setmetatable({
 		HOST			= ENET.host_create(IP .. ":" .. PORT, MAX_CLIENTS, CHANNELS, IN_BANDWIDTH, OUT_BANDWIDTH),
 		MESS_TIMEOUT	= MESS_TIMEOUT,
 		CLIENTS			= setmetatable({}, {__mode = "kv"}),
@@ -21,6 +21,10 @@ function CORE:Initialize()
 			send		= self:GetLibrary("SEND"),
 		}),
 	}, {__index = CORE})
+
+	MsgC(Color(46, 204, 113), "[CORE] Networking server initialized on " .. IP .. ":" .. PORT .. "\n")
+
+	return tNetwork
 end
 
 function CORE:GetHost()
