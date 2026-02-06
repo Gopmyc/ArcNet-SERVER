@@ -159,7 +159,7 @@ end
 function SUBLOADER_BASE:GetGroupByFileName(sFileName)
 	for sGroup, tSubLoader in pairs(self.SUBLOADERS) do
 		for iID, tFile in pairs(tSubLoader[2]) do
-			if tFile.NAME == sFileName then
+			if tFile.KEY == sFileName then
 				return sGroup, iID, tFile
 			end
 		end
