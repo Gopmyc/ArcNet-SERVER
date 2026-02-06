@@ -246,4 +246,15 @@ function LOADER:PrintLibraries()
 	MsgC(Color(52, 152, 219), "==============================")
 end
 
+function LOADER:Instanciate(sFileName)
+	assert(isstring(sFileName), "FileName must be a string")
+
+	local sGroup, iFileID, _	= self:GetSubLoaderBase():GetGroupByFileName(sFileName)
+	local tFileRuntimeConfig	= self:GetConfig()[sGroup].FILES.CONTENT[iFileID].RUNTIME
+
+	PrintTable(tFileRuntimeConfig)
+
+	return self:GetLibrary("RUNTIME"):Instantiate(sFileName, tFileRuntimeConfig)
+end
+
 return LOADER
