@@ -116,6 +116,8 @@ SAFE_GLOBAL:
   libraries:
     math:       full
     string:     full
+    os:
+      time:     true
     table:
       insert:   true
       remove:   true
