@@ -57,3 +57,20 @@ function LIBRARY:BuildEvent(sType, tPeer, Data, iChannel)
 		iChannel	= iChannel,
 	}
 end
+
+function LIBRARY:Destroy()
+	if not istable(self) then return end
+
+	local tEvents = rawget(self, "__EVENTS")
+	if istable(tEvents) then
+		setmetatable(tEvents, nil)
+
+		for kKey in pairs(tEvents) do
+			tEvents[kKey] = nil
+		end
+	end
+
+	self.__EVENTS = nil
+
+	setmetatable(self, nil)
+end
