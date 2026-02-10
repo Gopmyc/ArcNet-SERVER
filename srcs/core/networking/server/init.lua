@@ -22,7 +22,7 @@ function CORE:Initialize()
 		}),
 	}, {__index = CORE})
 
-	MsgC(Color(46, 204, 113), "[CORE] Networking server initialized on " .. IP .. ":" .. PORT .. "\n")
+	MsgC(Color(52, 152, 219), "[INFO] Networking server initialized on " .. IP .. ":" .. PORT )
 
 	return tNetwork
 end
