@@ -102,3 +102,39 @@ end
 function CORE:AddHook(sID, fCallBack)
 	self.HOOKS:AddHook(sID, fCallBack)
 end
+
+function CORE:Destroy()
+	if self._DESTROYED then return end
+	self._DESTROYED = true
+
+	if istable(self.CLIENTS) then
+		for sID, _ in pairs(self.CLIENTS) do
+			self.CLIENTS[sID] = nil
+		end
+	end
+
+	if istable(self.NETWORK_ID) then
+		for sID, _ in pairs(self.NETWORK_ID) do
+			self.NETWORK_ID[sID] = nil
+		end
+	end
+
+	if istable(self.HOOKS) and isfunction(self.HOOKS.Destroy) then
+		pcall(function() self.HOOKS:Destroy() end)
+	end
+	self.HOOKS = nil
+
+	if istable(self.EVENTS) and isfunction(self.EVENTS.Destroy) then
+		pcall(function() self.EVENTS:Destroy() end)
+	end
+	self.EVENTS = nil
+
+	if self.HOST then
+		pcall(function()
+			self.HOST:flush()
+			self.HOST = nil
+		end)
+	end
+
+	setmetatable(self, nil)
+end
