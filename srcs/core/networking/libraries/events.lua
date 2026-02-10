@@ -30,6 +30,7 @@ function LIBRARY:Initialize(tEvents)
 			),
 		},
 		{
+			__index		= LIBRARY,
 			__mode		= "kv",
 		}
 	)
@@ -38,7 +39,8 @@ end
 function LIBRARY:Call(tServer, tEvent)
 	return xpcall(
 		function()
-			return self.__EVENTS[tEvent.sType]:Call(tServer, tEvent)
+			PrintTable(tEvent)
+			return self.__EVENTS[tEvent.type]:Call(tServer, self:BuildEvent(tEvent.type, tEvent.peer, tEvent.data, tEvent.channel))
 		end,
 		function(sErr)
 			MsgC(Color(255, 0, 0), "[ERROR] Event error : " .. tostring(sErr))
@@ -46,13 +48,13 @@ function LIBRARY:Call(tServer, tEvent)
 	)
 end
 	
-function LIBRARY:BuildEvent(sType, tPeer, Data, iChannel)
+function LIBRARY:BuildEvent(sType, udPeer, Data, iChannel)
 	assert(isstring(sType),	"BuildEvent : Type event must be a string")
-	assert(istable(tPeer),	"BuildEvent : Peer event must be a table")
+	assert(isuserdata(udPeer),	"BuildEvent : Peer event must be a userdata")
 		
 	return {
 		sType		= sType,
-		tPeer		= tPeer,
+		udPeer		= udPeer,
 		tData		= Data,
 		iChannel	= iChannel,
 	}
