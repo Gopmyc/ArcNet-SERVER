@@ -118,6 +118,7 @@ SAFE_GLOBAL:
     string:     full
     os:
       time:     true
+      date:     true
     table:
       insert:   true
       remove:   true
