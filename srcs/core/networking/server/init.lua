@@ -1,12 +1,12 @@
 function CORE:Initialize()
 	local ENET			= assert(self:GetDependence("enet"),			"[CORE] 'ENET' library is required to initialize the networking core")
-	local IP			= assert(self:GetConfig().SERVER.IP,			"[CORE] 'IP' is required to initialize the networking core")
-	local PORT			= assert(self:GetConfig().SERVER.PORT,			"[CORE] 'PORT' is required to initialize the networking core")
-	local MAX_CLIENTS	= assert(self:GetConfig().SERVER.MAX_CLIENTS,	"[CORE] 'MAX_CLIENTS' is required to initialize the networking core")
-	local MAX_CHANNELS	= assert(self:GetConfig().SERVER.MAX_CHANNELS,	"[CORE] 'MAX_CHANNELS' is required to initialize the networking core")
-	local IN_BANDWIDTH	= assert(self:GetConfig().SERVER.IN_BANDWIDTH,	"[CORE] 'IN_BANDWIDTH' is required to initialize the networking core")
-	local OUT_BANDWIDTH	= assert(self:GetConfig().SERVER.OUT_BANDWIDTH,	"[CORE] 'OUT_BANDWIDTH' is required to initialize the networking core")
-	local MESS_TIMEOUT	= assert(self:GetConfig().SERVER.MESS_TIMEOUT,	"[CORE] 'MESS_TIMEOUT' is required to initialize the networking core")
+	local IP			= assert(self:GetConfig().NETWORK.IP,			"[CORE] 'IP' is required to initialize the networking core")
+	local PORT			= assert(self:GetConfig().NETWORK.PORT,			"[CORE] 'PORT' is required to initialize the networking core")
+	local MAX_CLIENTS	= assert(self:GetConfig().NETWORK.MAX_CLIENTS,	"[CORE] 'MAX_CLIENTS' is required to initialize the networking core")
+	local MAX_CHANNELS	= assert(self:GetConfig().NETWORK.MAX_CHANNELS,	"[CORE] 'MAX_CHANNELS' is required to initialize the networking core")
+	local IN_BANDWIDTH	= assert(self:GetConfig().NETWORK.IN_BANDWIDTH,	"[CORE] 'IN_BANDWIDTH' is required to initialize the networking core")
+	local OUT_BANDWIDTH	= assert(self:GetConfig().NETWORK.OUT_BANDWIDTH,	"[CORE] 'OUT_BANDWIDTH' is required to initialize the networking core")
+	local MESS_TIMEOUT	= assert(self:GetConfig().NETWORK.MESS_TIMEOUT,	"[CORE] 'MESS_TIMEOUT' is required to initialize the networking core")
 
 	local tNetwork	= setmetatable({
 		HOST			= ENET.host_create(IP .. ":" .. PORT, MAX_CLIENTS, MAX_CHANNELS, IN_BANDWIDTH, OUT_BANDWIDTH),
@@ -14,7 +14,7 @@ function CORE:Initialize()
 		CLIENTS			= setmetatable({}, {__mode = "kv"}),
 		NETWORK_ID		= setmetatable({}, {__mode = "kv"}),
 		HOOKS			= self:GetLibrary("HOOKS"):Initialize(),
-		EVENTS			= self:GetLibrary("HOOKS"):Initialize({
+		EVENTS			= self:GetLibrary("EVENTS"):Initialize({
 			connect		= self:GetLibrary("SERVER/EVENTS/CONNECT"),
 			disconnect	= self:GetLibrary("SERVER/EVENTS/DISCONNECT"),
 			receive		= self:GetLibrary("SERVER/EVENTS/RECEIVE"),
@@ -34,16 +34,17 @@ end
 function CORE:Update(iDt)
 	local tEvent	=	self.HOST:service(self.MESS_TIMEOUT)
 	while tEvent do
-		self.EVENTS:Call(self, tEvent)
-		tEvent		=	self.HOST:service(self.MESS_TIMEOUT)
+		xpcall(
+			function()
+				return self.EVENTS:Call(self, tEvent)
+			end,
+			function(sErr)
+				return MsgC(Color(231, 76, 60), "[ERROR] Unhandled ENet event error: " .. tostring(sErr))
+			end
+		)
+		
+		tEvent	= self.HOST:service(self.MESS_TIMEOUT)
 	end
-end
-
-function CORE:Close()
-	if not self.HOST then return MsgC(Color(231,76,60), "[CORE] HOST is already nil on 'Close") end
-
-	self.HOST:flush()
-	self.HOST	= nil
 end
 
 function CORE:SendToClient(iID, sMessageID, tData, iChannel, sFlag)
@@ -51,12 +52,12 @@ function CORE:SendToClient(iID, sMessageID, tData, iChannel, sFlag)
 	assert(isstring(sMessageID),	"[CORE] Invalid argument: sMessageID must be a string")
 	assert(istable(tData),			"[CORE] Invalid argument: tData must be a table")
 
-	local tPeer	= self:IsValidClient(sID)
-	if not tPeer then
-		return MsgC(Color(231,76,60), "[CORE] Attempted to send message to unregistered Client [ID : "..sID.."]  : "..tostring(tPeer))
+	local udPeer	= self:IsValidClient(sID)
+	if not udPeer then
+		return MsgC(Color(231,76,60), "[CORE] Attempted to send message to unregistered Client [ID : "..sID.."]  : "..tostring(udPeer))
 	end
 
-	self.EVENTS:Call(self, self.EVENTS:BuildEvent("send", tPeer, {
+	self.EVENTS:Call(self, self.EVENTS:BuildEvent("send", udPeer, {
 		id		=	sMessageID,
 		packet	=	tData,
 		flag	=	isstring(sFlag) and sFlag or "reliable"
@@ -104,9 +105,8 @@ function CORE:AddHook(sID, fCallBack)
 end
 
 function CORE:Destroy()
-	if self._DESTROYED then return end
-	self._DESTROYED = true
 
+	-- TODO: Kick all clients before destroying the server
 	if istable(self.CLIENTS) then
 		for sID, _ in pairs(self.CLIENTS) do
 			self.CLIENTS[sID] = nil
