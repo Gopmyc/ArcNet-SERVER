@@ -1,11 +1,11 @@
 function LIBRARY:Call(tServer, tEvent)
-	local sID			=	tostring(tEvent.tPeer:connect_id())
-	local tPeer			=	tServer:IsValidClient(sID)
-	local tData			=	tEvent.tData
-	local sFlag			=	tData.flag
+	local sID		= tostring(tEvent.udPeer:connect_id())
+	local udPeer	= tServer:IsValidClient(sID)
+	local tData		= tEvent.tData
+	local sFlag		= tData.flag
 
-	if not tPeer then
-		return MsgC(Color(231, 76, 60), "Attempted to send message to unregister Client [ID : " .. sID .. "]  : " .. tostring(tPeer))
+	if not udPeer then
+		return MsgC(Color(231, 76, 60), "Attempted to send message to unregister Client [ID : " .. sID .. "]  : " .. tostring(udPeer))
 	end
 
 	if not istable(tData) then
@@ -19,5 +19,5 @@ function LIBRARY:Call(tServer, tEvent)
 	-- // TODO : Crypt data...
 	-- // TODO : Compress data..
 		
-	tPeer:send(tData, tEvent.iChannel, sFlag or "reliable")
+	udPeer:send(tData, tEvent.iChannel, sFlag or "reliable")
 end
