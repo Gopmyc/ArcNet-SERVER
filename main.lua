@@ -1,6 +1,11 @@
-local ArcNet = require("srcs")
+function lovr.load(tArgs)
+	assert((tArgs[1] == "SERVER") or (tArgs[1] == "CLIENT"), "error: First argument must be either 'SERVER' or 'CLIENT', use : ./ArcNet-SERVER.exe 'SERVER' or : ./ArcNet-SERVER.exe 'CLIENT'")
+	SERVER	= (tArgs[1] == "SERVER")
+	CLIENT	= (tArgs[1] == "CLIENT")
 
-function lovr.load() end
+	ArcNet = require("srcs")
+end
+
 function lovr.update(iDeltaTime)
 	ArcNet:Update(iDeltaTime)
 end
