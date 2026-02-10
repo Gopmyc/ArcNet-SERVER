@@ -30,10 +30,7 @@ function CORE:Update(iDt)
 	while tEvent do
 		xpcall(
 			function()
-				for k, v in pairs(self.EVENTS) do
-					print(k, v)
-				end
-				-- return self.EVENTS:Call(self, tEvent)
+				return self.EVENTS:Call(self, tEvent)
 			end,
 			function(sErr)
 				return MsgC(Color(231, 76, 60), "[ERROR] Unhandled ENet event error: " .. tostring(sErr))
