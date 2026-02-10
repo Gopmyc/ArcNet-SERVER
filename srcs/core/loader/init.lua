@@ -71,24 +71,38 @@ function LOADER:InitializeSubloaders(tLoader, tConfig)
 	end
 end
 
-function LOADER:LoadConfiguration(sPath, tLibraries, tTable)
+function LOADER:LoadConfiguration(sPath, tLibraries, tTable, bIsRoot)
 	assert(isstring(sPath), "[CONFIG-LOADER] Path must be a string")
 	assert(istable(tLibraries), "[CONFIG-LOADER] Libraries must be a table")
 
+	tTable		= istable(tTable) and tTable or {}
+	bIsRoot		= (bIsRoot == nil) and true or bIsRoot
+
 	local tFiles, tDirs	= FilesFind(sPath)
-	tTable				= istable(tTable) and tTable or {}
 	for _, sFile in ipairs(tFiles) do
-		if sFile:sub(-5) == ".yaml" then
-			local sData								= lovr.filesystem.read(sPath .. "/" .. sFile)
-			local tParsed							= sData and tLibraries.YAML.eval(sData) or nil
-			tTable[string.upper(sFile:sub(1, -6))]	= istable(tParsed) and tParsed or nil
-		end
+		if not sFile:sub(-5) == ".yaml" then goto continue end
+		
+		local sData		= lovr.filesystem.read(sPath .. "/" .. sFile)
+		local tParsed	= sData and tLibraries.YAML.eval(sData) or nil
+
+		tTable[string.upper(sFile:sub(1, -6))] = istable(tParsed) and tParsed or nil
+
+		::continue::
 	end
 
 	for _, sDir in ipairs(tDirs) do
-		local sKey		= string.upper(sDir)
-		tTable[sKey]	= {}
-		self:LoadConfiguration(sPath .. "/" .. sDir, tLibraries, tTable[sKey])
+		local sDirLower = string.lower(sDir)
+
+		if bIsRoot and (sDirLower == "server" or sDirLower == "client") then
+			local bLoad	= (sDirLower == "server" and SERVER) or (sDirLower == "client" and CLIENT)
+			if bLoad then
+				self:LoadConfiguration(sPath .. "/" .. sDir, tLibraries, tTable, false)
+			end
+		else
+			local sKey		= string.upper(sDir)
+			tTable[sKey]	= {}
+			self:LoadConfiguration(sPath .. "/" .. sDir, tLibraries, tTable[sKey], false)
+		end
 	end
 
 	return tTable
