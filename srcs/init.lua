@@ -139,7 +139,11 @@ end
 
 local CONFIGURATION_PATH	= "configuration/"
 local LIBRARIES				= {
-	YAML	= require("libraries/yaml"),
+	YAML		= require("libraries/yaml"),
+	JSON		= require("libraries/json"),
+	CHACHA20	= require("libraries/plc/chacha20"),
+	POLY1305	= require("libraries/plc/poly1305"),
+	LZW			= require("libraries/lzw"),
 }
 
 local LOADER    = require("srcs/core/loader/init"):Initialize(CONFIGURATION_PATH, LIBRARIES)
