@@ -23,6 +23,10 @@ CONTENT:
     PATH:             "srcs/core/networking/"
     ARGS:
       - "enet"
+      - "JSON"
+      - "CHACHA20"
+      - "POLY1305"
+      - "LZW"
     IS_BINARY:        false
     LOAD_SUBFOLDERS:  true
     SIDES:
