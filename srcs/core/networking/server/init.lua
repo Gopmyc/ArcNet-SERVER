@@ -14,6 +14,12 @@ function CORE:Initialize()
 		CLIENTS			= setmetatable({}, {__mode = "kv"}),
 		NETWORK_ID		= setmetatable({}, {__mode = "kv"}),
 		HOOKS			= self:GetLibrary("HOOKS"):Initialize(),
+		CODEC			= self:GetLibrary("CODEC"):Initialize(
+			self:GetDependence("JSON"),
+			self:GetDependence("CHACHA20"),
+			self:GetDependence("POLY1305"),
+			self:GetDependence("LZW")
+		),
 		EVENTS			= self:GetLibrary("EVENTS"):Initialize({
 			connect		= self:GetLibrary("SERVER/EVENTS/CONNECT"),
 			disconnect	= self:GetLibrary("SERVER/EVENTS/DISCONNECT"),
@@ -47,21 +53,25 @@ function CORE:Update(iDt)
 	end
 end
 
-function CORE:SendToClient(iID, sMessageID, tData, iChannel, sFlag)
-	assert(isnumber(iID),			"[CORE] Invalid argument: iID must be a number")
-	assert(isstring(sMessageID),	"[CORE] Invalid argument: sMessageID must be a string")
-	assert(istable(tData),			"[CORE] Invalid argument: tData must be a table")
+function CORE:SendToClient(sID, tPacket, iChannel, sFlag)
+	assert(isstring(sID),			"[SERVER] Invalid argument: sID must be a number")
+	assert(isstring(sMessageID),	"[SERVER] Invalid argument: sMessageID must be a string")
+	assert(istable(tData),			"[SERVER] Invalid argument: tData must be a table")
+
+	sFlag	= ((sFlag == "unsequenced") or (sFlag == "unreliable") or (sFlag == "reliable")) and sFlag or "reliable"
 
 	local udPeer	= self:IsValidClient(sID)
 	if not udPeer then
-		return MsgC(Color(231,76,60), "[CORE] Attempted to send message to unregistered Client [ID : "..sID.."]  : "..tostring(udPeer))
+		return MsgC(Color(231,76,60), "[ERROR] Attempted to send message to unregistered Client [ID : "..sID.."]  : "..tostring(udPeer))
 	end
 
-	self.EVENTS:Call(self, self.EVENTS:BuildEvent("send", udPeer, {
-		id		=	sMessageID,
-		packet	=	tData,
-		flag	=	isstring(sFlag) and sFlag or "reliable"
-	}, isnumber(iChannel) and iChannel or 0))
+	self.EVENTS:Call(self, {
+		type	= "send",
+		peer	= udPeer,
+		data	= tPacket,
+		channel	= iChannel or 0,
+		flag	= sFlag,
+	})
 end
 
 function CORE:SendToClients(tData, iChannel, sFlag)
@@ -72,6 +82,21 @@ function CORE:SendToClients(tData, iChannel, sFlag)
 
 		::continue::
 	end
+end
+
+function CORE:BuildPacket(sMessageID, Content, bCrypt, bCompress)
+	assert(isstring(sMessageID),	"[SERVER] Invalid argument: sMessageID must be a string")
+	assert(Content ~= nil,			"[SERVER] Invalid argument: Content must not be nil")
+
+	bCrypt		= (bCrypt == true)		and true or false 
+	bCompress	= (bCompress == true)	and true or false
+
+	return {
+		ID			= sMessageID,
+		CONTENT		= Content,
+		ENCRYPTED	= bCrypt,
+		COMPRESSED	= bCompress,
+	}
 end
 
 function CORE:AddNetworkID(sID)
