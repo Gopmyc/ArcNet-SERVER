@@ -47,15 +47,14 @@ end
 function LIBRARY:Destroy()
 	if not istable(self) then return end
 
-	local tHooks = rawget(self, "_HOOKS")
-	if istable(tHooks) then
-		for sID, tList in pairs(tHooks) do
+	if istable(self._HOOKS) then
+		for sID, tList in pairs(self._HOOKS) do
 			if istable(tList) then
 				for i = 1, #tList do
 					tList[i] = nil
 				end
 			end
-			tHooks[sID] = nil
+			self._HOOKS[sID] = nil
 		end
 	end
 
