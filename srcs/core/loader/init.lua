@@ -8,7 +8,7 @@ function LOADER:Initialize(sConfigPath, tLibraries)
 
 	MsgC("\n")
 
-	local tLoader					= self:CreateLoaderInstance(self:LoadConfiguration(sConfigPath, tLibraries))
+	local tLoader					= self:CreateLoaderInstance(self:LoadConfiguration(sConfigPath, tLibraries), tLibraries)
 
 	-- It's not clean, it needs to be changed later
 	local fMsgC	= MsgC
@@ -21,7 +21,7 @@ function LOADER:Initialize(sConfigPath, tLibraries)
 	return tLoader
 end
 
-function LOADER:CreateLoaderInstance(tConfig)
+function LOADER:CreateLoaderInstance(tConfig, tLibraries)
 	local tLoaderConfig	= tConfig.LOADER
 	if not istable(tLoaderConfig) then return error("[CONFIG-LOADER] Missing 'LOADER' configuration table") end
 	tConfig.LOADER				= nil
@@ -54,6 +54,9 @@ function LOADER:CreateLoaderInstance(tConfig)
 
 	tLoader:GetLibrary("ENV_BUILDER"):SetEnvSpecification(tLoader.SAFE_GLOBAL)
 	tLoader:GetLibrary("RUNTIME"):SetRuntimeConfig(tLoader.RUNTIME)
+
+	-- TODO: Make this cleaner, it's really not good to have this kind of logic in the loader, but it works for now
+	tLoader:GetLibrary("RESSOURCES").RESSOURCES["EXTERNAL_LIBRARIES"]	= tLibraries
 
 	return tLoader
 end
