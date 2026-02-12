@@ -1,7 +1,7 @@
 function LIBRARY:GetLuaFiles(sFolderPath, tFilesShared)
-	assert(isstring(sFolderPath), "[FINDER] GetLuaFiles requires a non-empty string path")
+	assert(IsString(sFolderPath), "[FINDER] GetLuaFiles requires a non-empty string path")
 
-	tFilesShared		= istable(tFilesShared) and tFilesShared or {}
+	tFilesShared		= IsTable(tFilesShared) and tFilesShared or {}
 	local sCleanPath	= sFolderPath:sub(-1) == "/" and sFolderPath:sub(1, -2) or sFolderPath
 	local bExists		= lovr.filesystem.isDirectory(sCleanPath)
 
