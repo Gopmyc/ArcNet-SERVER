@@ -1,9 +1,9 @@
 function LIBRARY:Initialize(tJSONLib, tChaChaLib, tPolyLib, tLZWLib, tBase64Lib, sKey)
-	assert(istable(tJSONLib) and isfunction(tJSONLib.encode) and isfunction(tJSONLib.decode),			"[LIB-CODEC] Invalid JSON library")
-	assert(istable(tChaChaLib) and isfunction(tChaChaLib.encrypt) and isfunction(tChaChaLib.decrypt),	"[LIB-CODEC] Invalid ChaCha20 library")
-	assert(istable(tPolyLib) and isfunction(tPolyLib.auth),												"[LIB-CODEC] Invalid Poly1305 library")
-	assert(istable(tLZWLib) and isfunction(tLZWLib.compress) and isfunction(tLZWLib.decompress),		"[LIB-CODEC] Invalid LZW library")
-	assert(isstring(sKey),																				"[LIB-CODEC] Encryption key must be a string")
+	assert(IsTable(tJSONLib) and IsFunction(tJSONLib.encode) and IsFunction(tJSONLib.decode),			"[LIB-CODEC] Invalid JSON library")
+	assert(IsTable(tChaChaLib) and IsFunction(tChaChaLib.encrypt) and IsFunction(tChaChaLib.decrypt),	"[LIB-CODEC] Invalid ChaCha20 library")
+	assert(IsTable(tPolyLib) and IsFunction(tPolyLib.auth),												"[LIB-CODEC] Invalid Poly1305 library")
+	assert(IsTable(tLZWLib) and IsFunction(tLZWLib.compress) and IsFunction(tLZWLib.decompress),		"[LIB-CODEC] Invalid LZW library")
+	assert(IsString(sKey),																				"[LIB-CODEC] Encryption key must be a string")
 
 	return setmetatable(
 		{
@@ -18,16 +18,16 @@ function LIBRARY:Initialize(tJSONLib, tChaChaLib, tPolyLib, tLZWLib, tBase64Lib,
 end
 
 function LIBRARY:IsValidData(tData)
-	return istable(tData)
-	   and isstring(tData.ID)
+	return IsTable(tData)
+	   and IsString(tData.ID)
 	   and tData.CONTENT ~= nil
-	   and isbool(tData.ENCRYPTED)
-	   and isbool(tData.COMPRESSED)
+	   and IsBool(tData.ENCRYPTED)
+	   and IsBool(tData.COMPRESSED)
 end
 
 function LIBRARY:Compress(sContent)
-	assert(istable(self.LZW) and isfunction(self.LZW.compress),	"[LIB-CODEC] LZW.compress missing")
-	assert(isstring(sContent),									"[LIB-CODEC] Content must be string")
+	assert(IsTable(self.LZW) and IsFunction(self.LZW.compress),	"[LIB-CODEC] LZW.compress missing")
+	assert(IsString(sContent),									"[LIB-CODEC] Content must be string")
 
 	local bSuccess;
 	bSuccess, sContent	= pcall(self.LZW.compress, sContent)
@@ -39,11 +39,11 @@ function LIBRARY:Compress(sContent)
 end
 
 function LIBRARY:Encrypt(sContent, sKey, sNonce)
-	assert(isstring(sContent),												"[LIB-CODEC] Content must be a string")
-	assert(isstring(sKey),													"[LIB-CODEC] Key must be a string")
-	assert(isstring(sNonce),												"[LIB-CODEC] Nonce must be a string")
-	assert(istable(self.CHACHA20) and isfunction(self.CHACHA20.encrypt),	"[LIB-CODEC] CHACHA20.encrypt missing")
-	assert(istable(self.POLY1305) and isfunction(self.POLY1305.auth),		"[LIB-CODEC] POLY1305.auth missing")
+	assert(IsString(sContent),												"[LIB-CODEC] Content must be a string")
+	assert(IsString(sKey),													"[LIB-CODEC] Key must be a string")
+	assert(IsString(sNonce),												"[LIB-CODEC] Nonce must be a string")
+	assert(IsTable(self.CHACHA20) and IsFunction(self.CHACHA20.encrypt),	"[LIB-CODEC] CHACHA20.encrypt missing")
+	assert(IsTable(self.POLY1305) and IsFunction(self.POLY1305.auth),		"[LIB-CODEC] POLY1305.auth missing")
 
 	local bSuccess, sTag;
 	local sPolyKey		= sNonce .. string.rep("\0", 20)
@@ -62,11 +62,11 @@ function LIBRARY:Encrypt(sContent, sKey, sNonce)
 end
 
 function LIBRARY:Decrypt(sContent, sKey, sNonce, sTag)
-	assert(isstring(sContent),												"[LIB-CODEC] Content must be a string")
-	assert(isstring(sKey),													"[LIB-CODEC] Key must be a string")
-	assert(isstring(sNonce),												"[LIB-CODEC] Nonce must be a string")
-	assert(istable(self.CHACHA20) and isfunction(self.CHACHA20.decrypt),	"[LIB-CODEC] CHACHA20.decrypt missing")
-	assert(istable(self.POLY1305) and isfunction(self.POLY1305.auth),		"[LIB-CODEC] POLY1305.auth missing")
+	assert(IsString(sContent),												"[LIB-CODEC] Content must be a string")
+	assert(IsString(sKey),													"[LIB-CODEC] Key must be a string")
+	assert(IsString(sNonce),												"[LIB-CODEC] Nonce must be a string")
+	assert(IsTable(self.CHACHA20) and IsFunction(self.CHACHA20.decrypt),	"[LIB-CODEC] CHACHA20.decrypt missing")
+	assert(IsTable(self.POLY1305) and IsFunction(self.POLY1305.auth),		"[LIB-CODEC] POLY1305.auth missing")
 
 	local bSuccess, sDecrypted, bValid;
 	local sPolyKey	= sNonce .. string.rep("\0", 20)
@@ -85,8 +85,8 @@ function LIBRARY:Decrypt(sContent, sKey, sNonce, sTag)
 end
 
 function LIBRARY:Decompress(sContent)
-	assert(istable(self.LZW) and isfunction(self.LZW.decompress),	"[LIB-CODEC] LZW.decompress missing")
-	assert(isstring(sContent),										"[LIB-CODEC] Content must be a string")
+	assert(IsTable(self.LZW) and IsFunction(self.LZW.decompress),	"[LIB-CODEC] LZW.decompress missing")
+	assert(IsString(sContent),										"[LIB-CODEC] Content must be a string")
 
 	local bSuccess;
 	bSuccess, sContent	= pcall(self.LZW.decompress, sContent)
@@ -98,8 +98,8 @@ function LIBRARY:Decompress(sContent)
 end
 
 function LIBRARY:Base64Encode(sContent, sTag, sNonce)
-	assert(istable(self.BASE64) and isfunction(self.BASE64.encode),	"[LIB-CODEC] BASE64.encode missing")
-	assert(isstring(sContent),										"[LIB-CODEC] Content must be a string")
+	assert(IsTable(self.BASE64) and IsFunction(self.BASE64.encode),	"[LIB-CODEC] BASE64.encode missing")
+	assert(IsString(sContent),										"[LIB-CODEC] Content must be a string")
 
 	local bSuccess;
 	bSuccess, sContent	= pcall(self.BASE64.encode, sContent)
@@ -121,8 +121,8 @@ function LIBRARY:Base64Encode(sContent, sTag, sNonce)
 end
 
 function LIBRARY:Base64Decode(sContent, sTag, sNonce)
-	assert(istable(self.BASE64) and isfunction(self.BASE64.decode),	"[LIB-CODEC] BASE64.decode missing")
-	assert(isstring(sContent),										"[LIB-CODEC] Content must be a string")
+	assert(IsTable(self.BASE64) and IsFunction(self.BASE64.decode),	"[LIB-CODEC] BASE64.decode missing")
+	assert(IsString(sContent),										"[LIB-CODEC] Content must be a string")
 
 	local bSuccess;
 	bSuccess, sContent	= pcall(self.BASE64.decode, sContent)
@@ -144,8 +144,8 @@ function LIBRARY:Base64Decode(sContent, sTag, sNonce)
 end
 
 function LIBRARY:Encode(tData)
-	assert(istable(self.JSON) and isfunction(self.JSON.encode),	"[LIB-CODEC] JSON.encode missing")
-	assert(istable(tData) and self:IsValidData(tData),			"[LIB-CODEC] Invalid data")
+	assert(IsTable(self.JSON) and IsFunction(self.JSON.encode),	"[LIB-CODEC] JSON.encode missing")
+	assert(IsTable(tData) and self:IsValidData(tData),			"[LIB-CODEC] Invalid data")
 
 	local bSuccess, sJSONContent;
 
@@ -173,8 +173,8 @@ function LIBRARY:Encode(tData)
 end
 
 function LIBRARY:Decode(sData)
-	assert(istable(self.JSON) and isfunction(self.JSON.decode),	"[LIB-CODEC] JSON.decode missing")
-	assert(isstring(sData),										"[LIB-CODEC] Data must be string")
+	assert(IsTable(self.JSON) and IsFunction(self.JSON.decode),	"[LIB-CODEC] JSON.decode missing")
+	assert(IsString(sData),										"[LIB-CODEC] Data must be string")
 
 	local bSuccess, tData;
 
