@@ -35,43 +35,43 @@ RUNTIME:
 RULES_FILES:
   1:
     FIELD:  ROOT
-    TYPE:   table
+    TYPE:   Table
   2:
     FIELD:  KEY
-    TYPE:   string
+    TYPE:   String
   3:
     FIELD:  PATH
-    TYPE:   string
+    TYPE:   String
   4:
     FIELD:  ARGS
-    TYPE:   table
+    TYPE:   Table
   5:
     FIELD:  IS_BINARY
-    TYPE:   bool
+    TYPE:   Bool
   6:
     FIELD:  LOAD_SUBFOLDERS
-    TYPE:   bool
+    TYPE:   Bool
   7:
     FIELD:  SIDES
-    TYPE:   table
+    TYPE:   Table
   8:
     FIELD:  SIDES.CLIENT
-    TYPE:   bool
+    TYPE:   Bool
   9:
     FIELD:  SIDES.SERVER
-    TYPE:   bool
+    TYPE:   Bool
   10:
     FIELD:  CAPABILITIES
-    TYPE:   table
+    TYPE:   Table
   11:
     FIELD:  CAPABILITIES.SERVER
-    TYPE:   table
+    TYPE:   Table
   12:
     FIELD:  CAPABILITIES.CLIENT
-    TYPE:   table
+    TYPE:   Table
   13:
     FIELD:  CAPABILITIES.SHARED
-    TYPE:   table
+    TYPE:   Table
 
 SAFE_GLOBAL:
   # ┌───────────┐
@@ -97,13 +97,13 @@ SAFE_GLOBAL:
     type:         true
     unpack:       true
     xpcall:       true
-    istable:      true
-    isnumber:     true
-    isstring:     true
-    isbool:       true
-    isfunction:   true
-    isthread:     true
-    isuserdata:   true
+    IsTable:      true
+    IsNumber:     true
+    IsUserdata:   true
+    IsString:     true
+    IsBool:       true
+    IsFunction:   true
+    IsThread:     true
     Color:        true
     MsgC:         true
     PrintTable:   true
