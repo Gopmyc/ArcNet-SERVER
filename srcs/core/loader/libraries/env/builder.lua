@@ -20,7 +20,7 @@ function LIBRARY:ApplyLibraries(tEnv, tPolicy)
 	for sLib, vScope in pairs(tPolicy.libraries or {}) do
 		if vScope == "full" then
 			tEnv[sLib] = _G[sLib]
-		elseif istable(vScope) then
+		elseif IsTable(vScope) then
 			local tLib = {}
 			for sFn, bAllow in pairs(vScope) do
 				if bAllow and _G[sLib] then
@@ -49,7 +49,7 @@ function LIBRARY:ApplyFallback(tEnv, tPolicy)
 	if not tFallback then return end
 
 	local tMt = getmetatable(tEnv)
-	if not istable(tMt) then
+	if not IsTable(tMt) then
 		tMt = {}
 	end
 
@@ -90,7 +90,7 @@ function LIBRARY:LoadInternalLibraries(tEnv, sAccessPoint, sPath)
 	local tLib		= tEnv[sAccessPoint].LIBRARIES
 	local sID		= tEnv[sAccessPoint].__PATH .. tEnv[sAccessPoint].__NAME or "unknown"
 	
-	if not (istable(tLib) and isstring(tLib.PATH) and isfunction(tLib.Load)) then
+	if not (IsTable(tLib) and IsString(tLib.PATH) and IsFunction(tLib.Load)) then
 		MsgC(Color(241, 196, 15), "[WARNING][ENV-RESSOURCES] Cannot load internal libraries for '" .. sID .. "' : invalid LIBRARIES access point")
 		return tEnv
 	end
@@ -108,7 +108,7 @@ function LIBRARY:BuildEnvironment(sFileSource, tSandEnv, sAccessPoint, tFileArgs
 	local tEnv		= table.Copy(tSandEnv, true)
 	local tPolicy	= self.SAFE_GLOBAL
 
-	if not istable(tPolicy) then
+	if not IsTable(tPolicy) then
 		return MsgC(Color(241, 196, 15), "[WARNING] 'BuildEnvironement' fail for : '" .. sFileSource .. "', 'SAFE_GLOBAL' not set.")
 	end
 
