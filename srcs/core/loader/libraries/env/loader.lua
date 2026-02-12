@@ -27,10 +27,10 @@ function LIBRARY:ResolveFileSource(sFileSource, bIsSubFile)
 end
 
 function LIBRARY:LoadSubEnvironments(sBasePath, tBaseEnv, sAccessPoint, tFileArgs, tCapabilities, tNotLoadLibraries, tLibraries)
-	tNotLoadLibraries	= istable(tNotLoadLibraries) and tNotLoadLibraries or {true, true}
+	tNotLoadLibraries	= IsTable(tNotLoadLibraries) and tNotLoadLibraries or {true, true}
 
 	local fCheckLoadLib	= function(bNotLoadLib)
-		if not (isbool(bNotLoadLib) and bNotLoadLib ~= nil) then return true end
+		if not (IsBool(bNotLoadLib) and bNotLoadLib ~= nil) then return true end
 		return bNotLoadLib
 	end
 
@@ -38,7 +38,7 @@ function LIBRARY:LoadSubEnvironments(sBasePath, tBaseEnv, sAccessPoint, tFileArg
 	local sServer		= sBasePath .. "server/" .. self.ENTRY_POINT.SERVER
 
 	local tSandEnv	= table.Copy(tBaseEnv, true)
-	if istable(tBaseEnv[sAccessPoint]) and istable(tBaseEnv[sAccessPoint].LIBRARIES) then
+	if IsTable(tBaseEnv[sAccessPoint]) and IsTable(tBaseEnv[sAccessPoint].LIBRARIES) then
 		tSandEnv[sAccessPoint].LIBRARIES.BUFFER	= tLibraries or tSandEnv[sAccessPoint].LIBRARIES.BUFFER
 	end
 
@@ -71,7 +71,7 @@ end
 
 function LIBRARY:MergeSubEnvironments(tMainEnv, ...)
 	for iID, tSubEnv in pairs({...}) do
-		if not istable(tSubEnv) then
+		if not IsTable(tSubEnv) then
 			MsgC(Color(241, 196, 15), "[WARNING][ENV-RESSOURCES] Failed to merge sub-environment ID : '" .. iID .. "' : invalid table")
 			goto continue
 		end
@@ -87,13 +87,13 @@ function LIBRARY:MergeSubEnvironments(tMainEnv, ...)
 end
 
 function LIBRARY:Load(sFileSource, tSandEnv, sAccessPoint, tFileArgs, bLoadSubFolders, tCapabilities, bNotLoadLibraries)
-	assert(isstring(sFileSource),					"[ENV-RESSOURCES] FileSource must be a string (#1)")
-	assert(istable(tSandEnv),						"[ENV-RESSOURCES] ENV must be a table (#2)")
-	assert(isstring(sAccessPoint),					"[ENV-RESSOURCES] AccessPoint must be a string (#3)")
-	assert(tFileArgs == nil or istable(tFileArgs),	"[ENV-RESSOURCES] FileArg must be a table or nil (#4)")
+	assert(IsString(sFileSource),					"[ENV-RESSOURCES] FileSource must be a string (#1)")
+	assert(IsTable(tSandEnv),						"[ENV-RESSOURCES] ENV must be a table (#2)")
+	assert(IsString(sAccessPoint),					"[ENV-RESSOURCES] AccessPoint must be a string (#3)")
+	assert(tFileArgs == nil or IsTable(tFileArgs),	"[ENV-RESSOURCES] FileArg must be a table or nil (#4)")
 
 	local tEnvBuilder	= self:GetLibrary("ENV_BUILDER")
-	if not istable(tEnvBuilder) then
+	if not IsTable(tEnvBuilder) then
 		return MsgC(Color(241, 196, 15), "[WARNING] 'Load' method in loader library : 'ENV_LOADER', failed. 'ENV_BUILDER' library not found")
 	end
 
@@ -112,5 +112,5 @@ function LIBRARY:Load(sFileSource, tSandEnv, sAccessPoint, tFileArgs, bLoadSubFo
 	self:MergeSubEnvironments(tEnv[sAccessPoint], tSubEnv)
 	self:ExecuteChunk(sResolved, tEnv)
 
-	return assert(istable(tEnv[sAccessPoint]), "[ENV-RESSOURCES] Access point '" .. sAccessPoint .. "' unreachable") and tEnv[sAccessPoint]
+	return assert(IsTable(tEnv[sAccessPoint]), "[ENV-RESSOURCES] Access point '" .. sAccessPoint .. "' unreachable") and tEnv[sAccessPoint]
 end
