@@ -1,13 +1,13 @@
 function CORE:Initialize(sAddr, iPort, iMaxChannels, iTimeout, sKey, sDefaultEncrypt, sDefaultCompress)
 	local ENET			= assert(self:GetDependence("enet"),	"[CORE] 'ENET' library is required to initialize the networking core")
 
-	sAddr				=	isstring(sAddr)				and sAddr			or self:GetConfig().NETWORK.IP
-	iPort				=	isnumber(iPort)				and iPort			or self:GetConfig().NETWORK.PORT
-	iMaxChannels		=	isnumber(iMaxChannels)		and iMaxChannels	or self:GetConfig().NETWORK.MAX_CHANNELS
-	iTimeout			=	isnumber(iTimeout)			and iTimeout		or self:GetConfig().NETWORK.MESS_TIMEOUT
-	sKey				=	isstring(sKey)				and sKey			or self:GetConfig().NETWORK.ENCRYPTION_KEY
-	sDefaultEncrypt		=	isboolean(sDefaultEncrypt)		and sDefaultEncrypt	or self:GetConfig().NETWORK.DEFAULT_ENCRYPT
-	sDefaultCompress	=	isboolean(sDefaultCompress)	and sDefaultCompress	or self:GetConfig().NETWORK.DEFAULT_COMPRESS
+	sAddr				=	IsString(sAddr)				and sAddr			or self:GetConfig().NETWORK.IP
+	iPort				=	IsNumber(iPort)				and iPort			or self:GetConfig().NETWORK.PORT
+	iMaxChannels		=	IsNumber(iMaxChannels)		and iMaxChannels	or self:GetConfig().NETWORK.MAX_CHANNELS
+	iTimeout			=	IsNumber(iTimeout)			and iTimeout		or self:GetConfig().NETWORK.MESS_TIMEOUT
+	sKey				=	IsString(sKey)				and sKey			or self:GetConfig().NETWORK.ENCRYPTION_KEY
+	sDefaultEncrypt		=	IsBool(sDefaultEncrypt)		and sDefaultEncrypt	or self:GetConfig().NETWORK.DEFAULT_ENCRYPT
+	sDefaultCompress	=	IsBool(sDefaultCompress)	and sDefaultCompress	or self:GetConfig().NETWORK.DEFAULT_COMPRESS
 
 	local tNetwork		= setmetatable({}, {__index = CORE})
 
@@ -55,7 +55,7 @@ function CORE:Update(iDt)
 end
 
 function CORE:SendToServer(tPacket, iChannel, sFlag)
-	assert(istable(tPacket),		"[CLIENT] Invalid argument: tPacket must be a table")
+	assert(IsTable(tPacket),		"[CLIENT] Invalid argument: tPacket must be a table")
 
 	sFlag	= ((sFlag == "unsequenced") or (sFlag == "unreliable") or (sFlag == "reliable")) and sFlag or "reliable"
 
@@ -69,7 +69,7 @@ function CORE:SendToServer(tPacket, iChannel, sFlag)
 end
 
 function CORE:BuildPacket(sMessageID, Content, bCrypt, bCompress)
-	assert(isstring(sMessageID),	"[SERVER] Invalid argument: sMessageID must be a string")
+	assert(IsString(sMessageID),	"[SERVER] Invalid argument: sMessageID must be a string")
 	assert(Content ~= nil,			"[SERVER] Invalid argument: Content must not be nil")
 
 	bCrypt		= (bCrypt == true)		and true or self.DEFAULT_ENCRYPT
@@ -92,12 +92,12 @@ function CORE:AddHook(sID, fCallBack)
 end
 
 function CORE:Destroy()
-	if istable(self.HOOKS) and isfunction(self.HOOKS.Destroy) then
+	if IsTable(self.HOOKS) and IsFunction(self.HOOKS.Destroy) then
 		pcall(function() self.HOOKS:Destroy() end)
 	end
 	self.HOOKS = nil
 
-	if istable(self.EVENTS) and isfunction(self.EVENTS.Destroy) then
+	if IsTable(self.EVENTS) and IsFunction(self.EVENTS.Destroy) then
 		pcall(function() self.EVENTS:Destroy() end)
 	end
 	self.EVENTS = nil
