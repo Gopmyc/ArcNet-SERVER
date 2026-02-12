@@ -62,8 +62,8 @@ function CORE:Update(iDt)
 end
 
 function CORE:SendToClient(sID, tPacket, iChannel, sFlag)
-	assert(isstring(sID),			"[SERVER] Invalid argument: sID must be a number")
-	assert(istable(tPacket),		"[SERVER] Invalid argument: tPacket must be a table")
+	assert(IsString(sID),			"[SERVER] Invalid argument: sID must be a number")
+	assert(IsTable(tPacket),		"[SERVER] Invalid argument: tPacket must be a table")
 
 	sFlag	= ((sFlag == "unsequenced") or (sFlag == "unreliable") or (sFlag == "reliable")) and sFlag or "reliable"
 
@@ -83,7 +83,7 @@ end
 
 function CORE:SendToClients(tData, iChannel, sFlag)
 	for sID, tClient in pairs(self.CLIENTS) do
-		if not (istable(tClient) and next(tClient)) then goto continue end
+		if not (IsTable(tClient) and next(tClient)) then goto continue end
 
 		self:SendToClient(sID, tData, iChannel, sFlag)
 
@@ -92,7 +92,7 @@ function CORE:SendToClients(tData, iChannel, sFlag)
 end
 
 function CORE:BuildPacket(sMessageID, Content, bCrypt, bCompress)
-	assert(isstring(sMessageID),	"[SERVER] Invalid argument: sMessageID must be a string")
+	assert(IsString(sMessageID),	"[SERVER] Invalid argument: sMessageID must be a string")
 	assert(Content ~= nil,			"[SERVER] Invalid argument: Content must not be nil")
 
 	bCrypt		= (bCrypt == true)		and true or self.DEFAULT_ENCRYPT
@@ -107,13 +107,13 @@ function CORE:BuildPacket(sMessageID, Content, bCrypt, bCompress)
 end
 
 function CORE:AddNetworkID(sID)
-	assert(isstring(sID), "[CORE] Invalid argument: sID must be a string")
+	assert(IsString(sID), "[CORE] Invalid argument: sID must be a string")
 
 	self.NETWORK_ID[sID]	= true
 end
 
 function CORE:SubNetworkID(sID)
-	assert(isstring(sID), "[CORE] Invalid argument: sID must be a string")
+	assert(IsString(sID), "[CORE] Invalid argument: sID must be a string")
 
 	self.NETWORK_ID[sID]	= nil
 end
@@ -121,15 +121,15 @@ end
 function CORE:IsValidClient(sID)
 	return
 		(
-			isstring(sID) and
-			istable(self.CLIENTS[sID]) and
+			IsString(sID) and
+			IsTable(self.CLIENTS[sID]) and
 			next(self.CLIENTS[sID])
 		) and
 	self.CLIENTS[sID] or false
 end
 
 function CORE:IsValidMessage(sID)
-	return isstring(sID) and self.NETWORK_ID[sID]
+	return IsString(sID) and self.NETWORK_ID[sID]
 end
 
 function CORE:AddHook(sID, fCallBack)
@@ -139,24 +139,24 @@ end
 function CORE:Destroy()
 
 	-- TODO: Kick all clients before destroying the server
-	if istable(self.CLIENTS) then
+	if IsTable(self.CLIENTS) then
 		for sID, _ in pairs(self.CLIENTS) do
 			self.CLIENTS[sID] = nil
 		end
 	end
 
-	if istable(self.NETWORK_ID) then
+	if IsTable(self.NETWORK_ID) then
 		for sID, _ in pairs(self.NETWORK_ID) do
 			self.NETWORK_ID[sID] = nil
 		end
 	end
 
-	if istable(self.HOOKS) and isfunction(self.HOOKS.Destroy) then
+	if IsTable(self.HOOKS) and IsFunction(self.HOOKS.Destroy) then
 		pcall(function() self.HOOKS:Destroy() end)
 	end
 	self.HOOKS = nil
 
-	if istable(self.EVENTS) and isfunction(self.EVENTS.Destroy) then
+	if IsTable(self.EVENTS) and IsFunction(self.EVENTS.Destroy) then
 		pcall(function() self.EVENTS:Destroy() end)
 	end
 	self.EVENTS = nil
