@@ -9,23 +9,23 @@ LIBRARY._IN_DRAW			= false
 LIBRARY._PENDING_DESTROY	= {}
 
 function LIBRARY:SetRuntimeConfig(tRuntimeConfig)
-	assert(istable(tRuntimeConfig), "Runtime configuration must be a table")
+	assert(IsTable(tRuntimeConfig), "Runtime configuration must be a table")
 	self.RUNTIME_CONFIG = tRuntimeConfig
 end
 
 function LIBRARY:Instantiate(sFileName, tFileRuntimeConfig, tArgs)
-	assert(isstring(sFileName), "FileName must be a string")
+	assert(IsString(sFileName), "FileName must be a string")
 	assert(
-		istable(tFileRuntimeConfig) and
-		istable(tFileRuntimeConfig.UPDATE) and
-		istable(tFileRuntimeConfig.DRAW) and
-		isstring(tFileRuntimeConfig.ID),
+		IsTable(tFileRuntimeConfig) and
+		IsTable(tFileRuntimeConfig.UPDATE) and
+		IsTable(tFileRuntimeConfig.DRAW) and
+		IsString(tFileRuntimeConfig.ID),
 		"Runtime configuration must be a valid configuration"
 	)
 
 	self.INSTANCES[sFileName] = self.INSTANCES[sFileName] or {}
 
-	if istable(self.INSTANCES[sFileName][tFileRuntimeConfig.ID]) then
+	if IsTable(self.INSTANCES[sFileName][tFileRuntimeConfig.ID]) then
 		return MsgC(Color(231, 76, 60), "ERROR : Instance with ID '" .. tFileRuntimeConfig.ID .. "' already exists")
 	end
 
@@ -41,11 +41,11 @@ function LIBRARY:Instantiate(sFileName, tFileRuntimeConfig, tArgs)
 		end
 	)
 
-	if not bSuccess or not istable(tInstance) then
+	if not bSuccess or not IsTable(tInstance) then
 		return MsgC(Color(231, 76, 60), "[ERROR] Failed to instantiate '", sFileName, "'\n")
 	end
 
-	if not isfunction(tInstance.Destroy) then
+	if not IsFunction(tInstance.Destroy) then
 		return MsgC(Color(241, 196, 15), "[WARNING] Instance has no Destroy method : Registration refused\n")
 	end
 
@@ -61,17 +61,17 @@ function LIBRARY:Instantiate(sFileName, tFileRuntimeConfig, tArgs)
 end
 
 function LIBRARY:RegisterInstance(tInstance, tUpdateStage, tDrawStage)
-	assert(istable(tInstance), "Instance must be a table")
+	assert(IsTable(tInstance), "Instance must be a table")
 	assert(self.RUNTIME_CONFIG, "Runtime configuration not set")
 
 	self._INSTANCE_NODES[tInstance] = {}
 
-	if istable(tUpdateStage) then
+	if IsTable(tUpdateStage) then
 		local tStages	= self.RUNTIME_CONFIG.UPDATE
 		local nStage	= tStages[tUpdateStage.STAGE]
-		assert(isnumber(nStage), "Invalid UPDATE stage")
+		assert(IsNumber(nStage), "Invalid UPDATE stage")
 
-		local nOrder	= isnumber(tUpdateStage.ORDER) and tUpdateStage.ORDER or 0
+		local nOrder	= IsNumber(tUpdateStage.ORDER) and tUpdateStage.ORDER or 0
 		local nPriority	= nStage * 1000 + nOrder
 
 		local tNode = {
@@ -84,12 +84,12 @@ function LIBRARY:RegisterInstance(tInstance, tUpdateStage, tDrawStage)
 		self._INSTANCE_NODES[tInstance][#self._INSTANCE_NODES[tInstance] + 1] = tNode
 	end
 
-	if istable(tDrawStage) then
+	if IsTable(tDrawStage) then
 		local tStages	= self.RUNTIME_CONFIG.DRAW
 		local nStage	= tStages[tDrawStage.STAGE]
-		assert(isnumber(nStage), "Invalid DRAW stage")
+		assert(IsNumber(nStage), "Invalid DRAW stage")
 
-		local nOrder	= isnumber(tDrawStage.ORDER) and tDrawStage.ORDER or 0
+		local nOrder	= IsNumber(tDrawStage.ORDER) and tDrawStage.ORDER or 0
 		local nPriority	= nStage * 1000 + nOrder
 
 		local tNode = {
@@ -116,7 +116,7 @@ function LIBRARY:_CleanupPipeline(tPipeline)
 
 	for iRead = 1, #tPipeline do
 		local tNode = tPipeline[iRead]
-		if istable(tNode) and tNode.bEnabled then
+		if IsTable(tNode) and tNode.bEnabled then
 			tPipeline[iWrite] = tNode
 			iWrite = iWrite + 1
 		end
@@ -128,7 +128,7 @@ function LIBRARY:_CleanupPipeline(tPipeline)
 end
 
 function LIBRARY:DestroyInstance(tInstance)
-	assert(istable(tInstance), "Instance must be a table")
+	assert(IsTable(tInstance), "Instance must be a table")
 
 	if self._IN_UPDATE or self._IN_DRAW then
 		self._PENDING_DESTROY[tInstance] = true
@@ -140,7 +140,7 @@ end
 
 function LIBRARY:_DestroyNow(tInstance)
 	local tNodes = self._INSTANCE_NODES[tInstance]
-	if not istable(tNodes) then return end
+	if not IsTable(tNodes) then return end
 
 	for i = 1, #tNodes do
 		tNodes[i].bEnabled = false
@@ -196,10 +196,10 @@ function LIBRARY:Update(...)
 	for i = 1, #self.UPDATE_PIPELINE do
 		local tNode = self.UPDATE_PIPELINE[i]
 
-		if not (istable(tNode) and tNode.bEnabled) then goto continue end
+		if not (IsTable(tNode) and tNode.bEnabled) then goto continue end
 
 		local tInst = tNode.tInstance
-		if not isfunction(tInst.Update) then goto continue end
+		if not IsFunction(tInst.Update) then goto continue end
 
 		local bSuccess = xpcall(
 			function()
@@ -236,10 +236,10 @@ function LIBRARY:Draw(...)
 	for i = 1, #self.DRAW_PIPELINE do
 		local tNode = self.DRAW_PIPELINE[i]
 
-		if not (istable(tNode) and tNode.bEnabled) then goto continue end
+		if not (IsTable(tNode) and tNode.bEnabled) then goto continue end
 
 		local tInst = tNode.tInstance
-		if not isfunction(tInst.Draw) then goto continue end
+		if not IsFunction(tInst.Draw) then goto continue end
 
 		local bSuccess = xpcall(
 			function()
@@ -270,12 +270,12 @@ function LIBRARY:Draw(...)
 end
 
 function LIBRARY:GetInstanceByID(sGroupID, sID)
-	assert(isstring(sGroupID), "Group ID must be a string")
+	assert(IsString(sGroupID), "Group ID must be a string")
 
 	local tGroup = self.INSTANCES[sGroupID]
-	if not istable(tGroup) then return nil end
+	if not IsTable(tGroup) then return nil end
 
-	if isstring(sID) then
+	if IsString(sID) then
 		return tGroup[sID]
 	end
 
