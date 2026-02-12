@@ -1,19 +1,23 @@
-function CORE:Initialize(sAddr, iPort, iMaxChannels, iTimeout, sKey)
-	local ENET		= assert(self:GetDependence("enet"),	"[CORE] 'ENET' library is required to initialize the networking core")
+function CORE:Initialize(sAddr, iPort, iMaxChannels, iTimeout, sKey, sDefaultEncrypt, sDefaultCompress)
+	local ENET			= assert(self:GetDependence("enet"),	"[CORE] 'ENET' library is required to initialize the networking core")
 
-	sAddr			=	isstring(sAddr)				and sAddr			or self:GetConfig().NETWORK.IP
-	iPort			=	isnumber(iPort)				and iPort			or self:GetConfig().NETWORK.PORT
-	iMaxChannels	=	isnumber(iMaxChannels)		and iMaxChannels	or self:GetConfig().NETWORK.MAX_CHANNELS
-	iTimeout		=	isnumber(iTimeout)			and iTimeout		or self:GetConfig().NETWORK.MESS_TIMEOUT
-	sKey			=	isstring(sKey)				and sKey			or self:GetConfig().NETWORK.ENCRYPTION_KEY
+	sAddr				=	isstring(sAddr)				and sAddr			or self:GetConfig().NETWORK.IP
+	iPort				=	isnumber(iPort)				and iPort			or self:GetConfig().NETWORK.PORT
+	iMaxChannels		=	isnumber(iMaxChannels)		and iMaxChannels	or self:GetConfig().NETWORK.MAX_CHANNELS
+	iTimeout			=	isnumber(iTimeout)			and iTimeout		or self:GetConfig().NETWORK.MESS_TIMEOUT
+	sKey				=	isstring(sKey)				and sKey			or self:GetConfig().NETWORK.ENCRYPTION_KEY
+	sDefaultEncrypt		=	isboolean(sDefaultEncrypt)		and sDefaultEncrypt	or self:GetConfig().NETWORK.DEFAULT_ENCRYPT
+	sDefaultCompress	=	isboolean(sDefaultCompress)	and sDefaultCompress	or self:GetConfig().NETWORK.DEFAULT_COMPRESS
 
-	local tNetwork	= setmetatable({}, {__index = CORE})
+	local tNetwork		= setmetatable({}, {__index = CORE})
 
-	tNetwork.HOST			= ENET.host_create()
-	tNetwork.PEER			= tNetwork.HOST:connect(string.format("%s:%d", sAddr, iPort), iMaxChannels)
-	tNetwork.MESS_TIMEOUT	= iTimeout
-	tNetwork.HOOKS			= self:GetLibrary("HOOKS"):Initialize()
-	tNetwork.CODEC			= self:GetLibrary("CODEC"):Initialize(
+	tNetwork.HOST				= ENET.host_create()
+	tNetwork.PEER				= tNetwork.HOST:connect(string.format("%s:%d", sAddr, iPort), iMaxChannels)
+	tNetwork.MESS_TIMEOUT		= iTimeout
+	tNetwork.DEFAULT_ENCRYPT	= sDefaultEncrypt
+	tNetwork.DEFAULT_COMPRESS	= sDefaultCompress
+	tNetwork.HOOKS				= self:GetLibrary("HOOKS"):Initialize()
+	tNetwork.CODEC				= self:GetLibrary("CODEC"):Initialize(
 		self:GetDependence("JSON"),
 		self:GetDependence("CHACHA20"),
 		self:GetDependence("POLY1305"),
@@ -21,7 +25,7 @@ function CORE:Initialize(sAddr, iPort, iMaxChannels, iTimeout, sKey)
 		self:GetDependence("BASE64"),
 		sKey
 	)
-	tNetwork.EVENTS			= self:GetLibrary("EVENTS"):Initialize({
+	tNetwork.EVENTS				= self:GetLibrary("EVENTS"):Initialize({
 		connect		= self:GetLibrary("CLIENT/EVENTS/CONNECT"),
 		disconnect	= self:GetLibrary("CLIENT/EVENTS/DISCONNECT"),
 		receive		= self:GetLibrary("CLIENT/EVENTS/RECEIVE"),
@@ -68,8 +72,8 @@ function CORE:BuildPacket(sMessageID, Content, bCrypt, bCompress)
 	assert(isstring(sMessageID),	"[SERVER] Invalid argument: sMessageID must be a string")
 	assert(Content ~= nil,			"[SERVER] Invalid argument: Content must not be nil")
 
-	bCrypt		= (bCrypt == true)		and true or false 
-	bCompress	= (bCompress == true)	and true or false
+	bCrypt		= (bCrypt == true)		and true or self.DEFAULT_ENCRYPT
+	bCompress	= (bCompress == true)	and true or self.DEFAULT_COMPRESS
 
 	return {
 		ID			= sMessageID,
