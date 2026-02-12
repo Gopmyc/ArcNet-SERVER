@@ -1,10 +1,11 @@
-function CORE:Initialize(sAddr, iPort, iMaxChannels, iTimeout)
+function CORE:Initialize(sAddr, iPort, iMaxChannels, iTimeout, sKey)
 	local ENET		= assert(self:GetDependence("enet"),	"[CORE] 'ENET' library is required to initialize the networking core")
 
 	sAddr			=	isstring(sAddr)				and sAddr			or self:GetConfig().NETWORK.IP
 	iPort			=	isnumber(iPort)				and iPort			or self:GetConfig().NETWORK.PORT
 	iMaxChannels	=	isnumber(iMaxChannels)		and iMaxChannels	or self:GetConfig().NETWORK.MAX_CHANNELS
 	iTimeout		=	isnumber(iTimeout)			and iTimeout		or self:GetConfig().NETWORK.MESS_TIMEOUT
+	sKey			=	isstring(sKey)				and sKey			or self:GetConfig().NETWORK.ENCRYPTION_KEY
 
 	local tNetwork	= setmetatable({}, {__index = CORE})
 
@@ -16,7 +17,9 @@ function CORE:Initialize(sAddr, iPort, iMaxChannels, iTimeout)
 		self:GetDependence("JSON"),
 		self:GetDependence("CHACHA20"),
 		self:GetDependence("POLY1305"),
-		self:GetDependence("LZW")
+		self:GetDependence("LZW"),
+		self:GetDependence("BASE64"),
+		sKey
 	)
 	tNetwork.EVENTS			= self:GetLibrary("EVENTS"):Initialize({
 		connect		= self:GetLibrary("CLIENT/EVENTS/CONNECT"),
@@ -47,35 +50,33 @@ function CORE:Update(iDt)
 	end
 end
 
-function CORE:Send(sMessageID, tData, iChannel, sFlag)
-	assert(isstring(sMessageID), "Send: sMessageID must be a string")
+function CORE:SendToServer(tPacket, iChannel, sFlag)
+	assert(istable(tPacket),		"[CLIENT] Invalid argument: tPacket must be a table")
 
-	if not self:IsConnected() then
-		return MsgC(Color(241, 196, 15), "[WARNING] Cannot send: not connected")
-	end
+	sFlag	= ((sFlag == "unsequenced") or (sFlag == "unreliable") or (sFlag == "reliable")) and sFlag or "reliable"
 
-	iChannel	=	isnumber(iChannel)	and iChannel or 0
-	sFlag		=	isstring(sFlag)		and sFlag or "reliable"
-	tData		=	istable(tData)		and tData or {tData}
-	tData		=	self:GetDependence("json").encode({sMessageID, tData}) -- TODO : Fix that
-
-	-- // TODO : Encrypt data...
-	
-	self.PEER:send(tData, iChannel, sFlag)
+	self.EVENTS:Call(self, {
+		type	= "send",
+		peer	= self.PEER,
+		data	= tPacket,
+		channel	= iChannel or 0,
+		flag	= sFlag,
+	})
 end
 
-function CORE:SendToServer(sMessageID, tData, iChannel, sFlag)
-	assert(isstring(sMessageID), "Send: sMessageID must be a string")
+function CORE:BuildPacket(sMessageID, Content, bCrypt, bCompress)
+	assert(isstring(sMessageID),	"[SERVER] Invalid argument: sMessageID must be a string")
+	assert(Content ~= nil,			"[SERVER] Invalid argument: Content must not be nil")
 
-	if not self:IsConnected() then
-		return MsgC(Color(241, 196, 15), "[WARNING] Cannot send: not connected")
-	end
+	bCrypt		= (bCrypt == true)		and true or false 
+	bCompress	= (bCompress == true)	and true or false
 
-	self.EVENTS:Call(self, self.EVENTS:BuildEvent("send", self.PEER, {
-		id		=	sMessageID,
-		packet	=	istable(tData)		and tData or {tData},
-		flag	=	isstring(sFlag)		and sFlag or "reliable"
-	}, isnumber(iChannel) and iChannel or 0))
+	return {
+		ID			= sMessageID,
+		CONTENT		= Content,
+		ENCRYPTED	= bCrypt,
+		COMPRESSED	= bCompress,
+	}
 end
 
 function CORE:IsConnected()
@@ -110,4 +111,8 @@ function CORE:Destroy()
 	end
 
 	setmetatable(self, nil)
+end
+
+function CORE:GetPeer()
+	return self.PEER
 end
