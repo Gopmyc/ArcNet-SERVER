@@ -1,0 +1,28 @@
+return {
+	CONFIGURATION_PATH	= "configuration/",
+	LIBRARIES			= {
+		YAML		= "libraries/yaml",
+		JSON		= "libraries/json",
+		BASE64		= "libraries/base64",
+		CHACHA20	= "libraries/plc/chacha20",
+		POLY1305	= "libraries/plc/poly1305",
+		LZW			= "libraries/lzw",
+	},
+	ENVIRONMENT			= {
+		{ KEY = "IsTable",					PATH = "env/Is/table"				},
+		{ KEY = "IsNumber",					PATH = "env/Is/number"				},
+		{ KEY = "IsString",					PATH = "env/Is/string"				},
+		{ KEY = "IsBool",					PATH = "env/Is/bool"				},
+		{ KEY = "IsFunction",				PATH = "env/Is/function"			},
+		{ KEY = "IsThread",					PATH = "env/Is/thread"				},
+		{ KEY = "IsUserdata",				PATH = "env/Is/userdata"			},
+		{ KEY = "string.Totable",			PATH = "env/string/Totable"			},
+		{ KEY = "string.Explode",			PATH = "env/string/Explode"			},
+		{ KEY = "table.Copy",				PATH = "env/table/Copy"				},
+		{ KEY = "Color",					PATH = "env/Color"					},
+		{ KEY = "MsgC",						PATH = "env/MsgC"					},
+		{ KEY = "PrintTable",				PATH = "env/PrintTable"				},
+		{ KEY = "FilesFind",				PATH = "env/FilesFind"				},
+		{ KEY = "LoadFileInEnvironment",	PATH = "env/LoadFileInEnvironment"	},
+	},
+}
