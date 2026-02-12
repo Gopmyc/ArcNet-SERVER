@@ -1,6 +1,6 @@
 ENABLED:          true
 HOT_RELOAD_TIME:  1
-PREFIX_DEFAULT:   "ARCNET"
+PREFIX_DEFAULT:   "NEXUM"
 
 COLORS:
   # ┌───────────────────┐
